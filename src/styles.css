@@ -3,6 +3,7 @@
 @import "@paperboat/shared/tokens.css";
 @import "@paperboat/shared/plates.css";
 @import "@paperboat/shared/files.css";
+@import "@paperboat/shared/packages.css";
 @import "@paperboat/shared/squero.css";
 @import "@paperboat/shared/editor.css";
 
@@ -818,18 +819,6 @@ body.dragging-card .library {
 .lib-quick-item b {
   font-size: var(--size-xs);
   font-family: var(--font-mono);
-}
-.status-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-.status-table td {
-  padding: 6px 8px;
-  border-bottom: 1px solid var(--line);
-  font-size: var(--size-xs);
-}
-.status-table td:first-child {
-  width: 90px;
 }
 .key.err { color: var(--danger); }
 

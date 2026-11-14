@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import type { OmcStatus } from "../omc/omc.ts";
 
 export function PromptModal({
   title,
@@ -190,61 +189,6 @@ export function LibraryModal({
             </div>
           </form>
         </div>
-      </div>
-    </div>
-  );
-}
-
-export function StatusModal({
-  status,
-  serverUrl,
-  onClose,
-}: {
-  status: OmcStatus;
-  serverUrl: string;
-  onClose: () => void;
-}) {
-  return (
-    <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="OMC Runtime Status">
-      <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
-        <header className="modal-head">
-          <h3>OMC Runtime Diagnostics</h3>
-          <button type="button" className="modal-close" onClick={onClose} aria-label="Close">
-            ×
-          </button>
-        </header>
-        <div className="modal-body">
-          <table className="status-table">
-            <tbody>
-              <tr>
-                <td><b>Status</b></td>
-                <td>
-                  <span className={`chip omc-${status.state}`}>
-                    <i aria-hidden="true" />
-                    {status.state}
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td><b>Version</b></td>
-                <td><code>{status.version || "Unknown"}</code></td>
-              </tr>
-              <tr>
-                <td><b>Server URL</b></td>
-                <td><code>{serverUrl}</code></td>
-              </tr>
-              <tr>
-                <td><b>Protocol</b></td>
-                <td><code>squero/0 (WebSocket)</code></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <footer className="modal-actions">
-          <button type="button" className="key small run" onClick={onClose}>
-            Close
-          </button>
-        </footer>
       </div>
     </div>
   );

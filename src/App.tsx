@@ -9,6 +9,8 @@ import { Canvas } from "./canvas/Canvas.tsx";
 import { runBackendExport } from "./dock/dock.ts";
 import { StudioDock } from "./dock/index.tsx";
 import { Library, useClassIndex } from "./library/Library.tsx";
+import { PackageWindow } from "@paperboat/shared/packages";
+import { Packages } from "./library/Packages.tsx";
 import { StudioContext, type StudioModel } from "./model/types.ts";
 import { OmcClient, type OmcStatus } from "./omc/omc.ts";
 import { type Log, type Message } from "@paperboat/shared/components";
@@ -16,7 +18,7 @@ import { ComponentPopover } from "./popover/index.tsx";
 import { InterfaceSheet } from "./sheet/index.tsx";
 import { IconView } from "./icon/IconView.tsx";
 import { AboutModal } from "./shell/AboutModal.tsx";
-import { ConfirmModal, LibraryModal, PromptModal, StatusModal } from "./shell/Dialogs.tsx";
+import { ConfirmModal, LibraryModal, PromptModal } from "./shell/Dialogs.tsx";
 import { TopBar } from "./shell/TopBar.tsx";
 import { useTheme, type Theme } from "@paperboat/shared/components";
 import { Opening } from "./shell/Opening.tsx";
@@ -108,7 +110,7 @@ function Studio({ omc, status }: { omc: OmcClient; status: OmcStatus }) {
   const [promptModal, setPromptModal] = useState<PromptSpec | null>(null);
   const [confirmModal, setConfirmModal] = useState<ConfirmSpec | null>(null);
   const [libraryModalOpen, setLibraryModalOpen] = useState(false);
-  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [packagesOpen, setPackagesOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false); // the command search (Ctrl+K)
   const [logs, setLogs] = useState<Log[]>([]);
@@ -701,7 +703,7 @@ function Studio({ omc, status }: { omc: OmcClient; status: OmcStatus }) {
           onAbout={() => setAboutOpen(true)}
           theme={theme}
           onTheme={setTheme}
-          onStatusClick={() => setStatusModalOpen(true)}
+          onStatusClick={() => setPackagesOpen(true)}
           running={running}
         />
         {api && model ? (
@@ -826,12 +828,10 @@ function Studio({ omc, status }: { omc: OmcClient; status: OmcStatus }) {
           />
         )}
 
-        {statusModalOpen && (
-          <StatusModal
-            status={status}
-            serverUrl={serverUrl()}
-            onClose={() => setStatusModalOpen(false)}
-          />
+        {packagesOpen && (
+          <PackageWindow title="OpenModelica" tags={[`omc ${status.state}`, serverUrl()]} onClose={() => setPackagesOpen(false)}>
+            <Packages omc={omc} onInstalled={(name) => say(`Installed ${name}: load it from the Library`)} />
+          </PackageWindow>
         )}
 
         {aboutOpen && <AboutModal omc={omc} status={status} onClose={() => setAboutOpen(false)} />}

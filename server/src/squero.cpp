@@ -115,6 +115,85 @@ std::string trim(std::string s) {
 
 std::string text_of(const std::string& omc_answer) { return parse_value(omc_answer).atom; }
 
+// The package manager panel (shared with Squero MX and Paperboat): OpenModelica's own
+// package manager through omc, so it works wherever omc runs (here or in its container).
+// status: omc's version and the installed libraries with their versions; index: the
+// OpenModelica package index (updatePackageIndex, then its index.json); install: one
+// library at one version; upgrade: every installed library to its newest version.
+json op_packages(Omc& omc, const json& in) {
+  const std::string action = in.value("action", "status");
+  const auto quoted = [](const std::string& s) {
+    std::string out = "\"";
+    for (char c : s) {
+      if (c == '"' || c == '\\') out += '\\';
+      out += c;
+    }
+    return out + "\"";
+  };
+  const auto library_dir = [&] { return text_of(omc.call("getHomeDirectoryPath()")) + "/.openmodelica/libraries"; };
+  if (action == "status") {
+    json libraries = json::array();
+    for (const auto& name : parse_value(omc.call("getAvailableLibraries()")).items) {
+      json versions = json::array();
+      for (const auto& v : parse_value(omc.call("getAvailableLibraryVersions(" + name.atom + ")")).items) versions.push_back(v.atom);
+      libraries.push_back({{"name", name.atom}, {"versions", versions}});
+    }
+    return {{"version", text_of(omc.call("getVersion()"))}, {"path", library_dir()}, {"libraries", libraries}};
+  }
+  if (action == "index") {
+    if (in.value("refresh", true) && omc.call("updatePackageIndex()", std::chrono::minutes(2)) != "true")
+      throw std::runtime_error("cannot update the package index: " + omc.errors());
+    const std::string text = text_of(omc.call("readFile(" + quoted(library_dir() + "/index.json") + ")"));
+    const json index = json::parse(text, nullptr, false);
+    if (index.is_discarded() || !index.contains("libs")) throw std::runtime_error("the package index could not be read");
+    json out = json::array();
+    for (const auto& [name, lib] : index.at("libs").items()) {
+      json versions = json::array();
+      if (lib.contains("versions") && lib.at("versions").is_object())
+        for (const auto& [v, _] : lib.at("versions").items()) versions.push_back(v);
+      // Newest first, as the panel lists them.
+      std::vector<std::string> vs = versions.get<std::vector<std::string>>();
+      std::ranges::stable_sort(vs, [](const std::string& a, const std::string& b) {
+        const bool da = !a.empty() && std::isdigit(static_cast<unsigned char>(a[0])), db = !b.empty() && std::isdigit(static_cast<unsigned char>(b[0]));
+        if (da != db) return da;  // releases first, branches (master) after
+        // Newest first, numbers compared as numbers (12.0.0 after 9.1.3).
+        std::size_t i = 0, j = 0;
+        while (i < a.size() && j < b.size()) {
+          if (std::isdigit(static_cast<unsigned char>(a[i])) && std::isdigit(static_cast<unsigned char>(b[j]))) {
+            std::size_t ei = i, ej = j;
+            while (ei < a.size() && std::isdigit(static_cast<unsigned char>(a[ei]))) ++ei;
+            while (ej < b.size() && std::isdigit(static_cast<unsigned char>(b[ej]))) ++ej;
+            const unsigned long x = std::stoul(a.substr(i, ei - i)), y = std::stoul(b.substr(j, ej - j));
+            if (x != y) return x > y;
+            i = ei, j = ej;
+          } else {
+            if (a[i] != b[j]) return a[i] > b[j];
+            ++i, ++j;
+          }
+        }
+        return a.size() > b.size();
+      });
+      out.push_back({{"name", name}, {"repo", lib.value("git", "")}, {"versions", vs}});
+    }
+    return {{"libraries", out}};
+  }
+  const std::string name = in.value("name", "");
+  if (action == "install") {
+    if (name.empty() || name.find_first_not_of("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_") != std::string::npos)
+      throw std::runtime_error("install: a library name, like Buildings");
+    const std::string version = in.value("version", "");
+    if (omc.call("installPackage(" + name + ", " + quoted(version) + ", exactMatch=" + (version.empty() ? "false" : "true") + ")", std::chrono::minutes(10)) != "true")
+      throw std::runtime_error("cannot install " + name + ": " + omc.errors());
+    return op_packages(omc, {{"action", "status"}});
+  }
+  if (action == "upgrade") {
+    if (omc.call("upgradeInstalledPackages(installNewestVersions=true)", std::chrono::minutes(10)) != "true")
+      throw std::runtime_error("cannot upgrade the libraries: " + omc.errors());
+    return op_packages(omc, {{"action", "status"}});
+  }
+  throw std::runtime_error("packages: unknown action \"" + action + "\"");
+}
+
 bool is_msl(const std::string& model) { return model == "Modelica" || model.starts_with("Modelica."); }
 
 // A user model, never the library: Studio edits only the user's file.
@@ -1402,6 +1481,8 @@ std::string handle(Omc& omc, const std::string& message, const Session& session)
       out["result"] = omc.call(expr);
     } else if (op == "open") {
       out["result"] = op_open(omc, in, session);
+    } else if (op == "packages") {
+      out["result"] = op_packages(omc, in);
     } else if (op == "workspace") {
       out["result"] = op_workspace(in);
     } else if (op == "git") {
