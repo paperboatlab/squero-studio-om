@@ -5,6 +5,7 @@ import { ReactFlowProvider } from "@xyflow/react";
 import { CommandSearch, Switch } from "@paperboat/shared/components";
 import { SEARCH_CHORD, useShortcuts, type Command } from "@paperboat/shared";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import type { ConfigStore } from "@paperboat/shared/editor";
 import { Canvas } from "./canvas/Canvas.tsx";
 import { runBackendExport } from "./dock/dock.ts";
 import { StudioDock } from "./dock/index.tsx";
@@ -82,6 +83,11 @@ type ConfirmSpec = {
 };
 
 function Studio({ omc, status }: { omc: OmcClient; status: OmcStatus }) {
+  // The user's squero.toml (editor settings and themes, shared with MX), through the server's config ops.
+  const config = useMemo<ConfigStore>(() => ({
+    read: () => omc.op<{ path: string; text: string | null }>("config"),
+    write: (text) => omc.op("config_write", { text }).then(() => undefined),
+  }), [omc]);
   const { api, actions, error, stage } = useStudioStore(omc, status);
   const [popover, setPopover] = useState<string | null>(null);
   const [sheet, setSheet] = useState(false);
@@ -224,7 +230,7 @@ function Studio({ omc, status }: { omc: OmcClient; status: OmcStatus }) {
   useEffect(() => {
     if (!gitRoot) { setGit(null); return; }
     let live = true;
-    omc.op<GitState | null>("git", { root: gitRoot }).then((next) => live && setGit(next ?? null), () => live && setGit(null));
+    omc.op<GitState | null>("git", { root: gitRoot }).then((next) => live && setGit(next || null), () => live && setGit(null));
     return () => { live = false; };
   }, [omc, gitRoot, workspaceTick, gitTick, savedState]);
 
@@ -755,6 +761,7 @@ function Studio({ omc, status }: { omc: OmcClient; status: OmcStatus }) {
                     actions={actions}
                     line={sourceLine}
                     theme={shown}
+                    config={config}
                     base={model.file ? git?.head[model.file] ?? null : null}
                     onEditor={(handle) => {
                       editorHandle.current = handle;

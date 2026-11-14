@@ -7,16 +7,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { EditorSelection } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
-import { CodeEditor, DEFAULT_EDITOR_SETTINGS, EditorSettingsKey, type EditorSettings } from "@paperboat/shared/editor";
+import { CodeEditor, EditorSettingsKey, useEditorSettings, type ConfigStore } from "@paperboat/shared/editor";
 import type { StudioModel } from "../model/types.ts";
 import { modelica } from "../split/modelica.ts";
 import type { Actions } from "../store/index.tsx";
-
-const SETTINGS_KEY = "om.editor";
-const loadSettings = (): EditorSettings => {
-  try { return { ...DEFAULT_EDITOR_SETTINGS, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) ?? "{}") }; }
-  catch { return DEFAULT_EDITOR_SETTINGS; }
-};
 
 export type TextEditorHandle = { dirty: boolean; save: () => Promise<void> };
 
@@ -25,6 +19,7 @@ export function TextStage({
   actions,
   line,
   theme,
+  config,
   base,
   onEditor,
 }: {
@@ -33,6 +28,8 @@ export function TextStage({
   line?: number;
   /** The app's shown theme, for the editor's "ui" setting. */
   theme: "light" | "dark";
+  /** The user's config file, where the editor settings live. */
+  config?: ConfigStore;
   /** HEAD's copy of the file for the git gutter; null when untracked or outside a repository. */
   base?: string | null;
   onEditor?: (handle: TextEditorHandle | null) => void;
@@ -42,8 +39,7 @@ export function TextStage({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [view, setView] = useState<EditorView | null>(null);
-  const [settings, setSettings] = useState(loadSettings);
-  useEffect(() => { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }, [settings]);
+  const [settings, setSettings, configFile] = useEditorSettings(config, "om.editor");
   const read = useRef(actions.fileText);
   read.current = actions.fileText;
   const write = useRef(actions.saveText);
@@ -125,7 +121,7 @@ export function TextStage({
         <span className="lbl">· {model.name}</span>
         <span className="spacer" />
         {dirty && <span className="lbl">unsaved</span>}
-        <EditorSettingsKey settings={settings} onSettings={setSettings} />
+        <EditorSettingsKey settings={settings} onSettings={setSettings} file={configFile} />
         {text !== null && (
           <button type="button" className="key small" onClick={() => void navigator.clipboard?.writeText(text)}>
             Copy

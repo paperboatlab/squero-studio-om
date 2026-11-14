@@ -63,6 +63,11 @@ bin/squero-om [Model.mo]            # server + app on http://localhost:59201 (SQ
 
 For the UI alone: `npm run dev` (Vite on :3048; start `bin/squero-om` for the server).
 
+The text editor's settings and themes live in the user config file `squero.toml`, shared with
+Squero Studio MX: `~/.config/paperboat/` (`$XDG_CONFIG_HOME`) on Linux and macOS,
+`%APPDATA%\paperboat\` on Windows. The first run writes it with every key commented; the server's
+`config` and `config_write` ops read and write it, and `@paperboat/shared/editor` parses it.
+
 ## omc
 
 Studio finds `omc` itself (`squero-om doctor` says which and checks the MSL loads):

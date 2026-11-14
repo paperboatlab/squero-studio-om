@@ -27,6 +27,8 @@
 //   delete_package {dir, root}                 → {dir}              remove a package folder inside the workspace
 //   move_class {file, targetDir, within?}      → {file, model}      move a class to another package, rewrite `within`
 //   read_file {file}                           → {text}             the .mo file's own text, for the editor
+//   config    {}                                → {path, text|null}  the user's squero.toml (shared with MX), null when absent
+//   config_write {text}                        → {path}             write it, making the folder
 //   save      {model}                           → {file}             `save(model)`: the model's own .mo
 //   icon      {class}                           → {icon, connectors, notice}
 //                                                  the imported look of a class (`paperboat modelica icon`)

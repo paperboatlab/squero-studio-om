@@ -563,6 +563,43 @@ json op_delete_package(const json& in) {
   return json{{"dir", dir.string()}};
 }
 
+// The user's config file, squero.toml, shared with Squero Studio MX: $XDG_CONFIG_HOME/paperboat
+// (else ~/.config/paperboat) on Linux and macOS, %APPDATA%\paperboat on Windows. The server only
+// reads and writes the text; @paperboat/shared/editor parses it and patches single keys.
+fs::path config_file() {
+  const auto env = [](const char* name) { const char* v = std::getenv(name); return std::string(v ? v : ""); };
+#ifdef _WIN32
+  fs::path dir = env("APPDATA").empty() ? fs::path(env("USERPROFILE")) / "AppData" / "Roaming" : fs::path(env("APPDATA"));
+#else
+  fs::path dir = env("XDG_CONFIG_HOME").empty() ? fs::path(env("HOME")) / ".config" : fs::path(env("XDG_CONFIG_HOME"));
+#endif
+  return dir / "paperboat" / "squero.toml";
+}
+
+// Shown to the user, so ~ for the home folder as MX shows it.
+std::string config_path() {
+  const std::string file = config_file().string();
+  const char* home = std::getenv("HOME");
+  return home && *home && file.rfind(home, 0) == 0 ? "~" + file.substr(std::strlen(home)) : file;
+}
+
+json op_config() {
+  const fs::path file = config_file();
+  std::ifstream source(file);
+  if (!source) return {{"path", config_path()}, {"text", nullptr}};
+  return {{"path", config_path()}, {"text", std::string((std::istreambuf_iterator<char>(source)), std::istreambuf_iterator<char>())}};
+}
+
+json op_config_write(const json& in) {
+  if (!in.contains("text") || !in["text"].is_string()) throw std::runtime_error("config_write needs text");
+  const fs::path file = config_file();
+  fs::create_directories(file.parent_path());
+  std::ofstream out(file, std::ios::binary);
+  out << in["text"].get<std::string>();
+  if (!out) throw std::runtime_error("cannot write " + file.string());
+  return {{"path", config_path()}};
+}
+
 json op_read_file(const json& in) {
   const std::string file_name = in.value("file", "");
   if (file_name.empty()) throw std::runtime_error("read_file needs a file");
@@ -1406,6 +1443,10 @@ std::string handle(Omc& omc, const std::string& message, const Session& session)
       out["result"] = op_workspace(in);
     } else if (op == "git") {
       out["result"] = op_git(in);
+    } else if (op == "config") {
+      out["result"] = op_config();
+    } else if (op == "config_write") {
+      out["result"] = op_config_write(in);
     } else if (op == "about") {
       const std::string version = paperboat_version();
       out["result"] = json{{"paperboat", version.empty() ? json(nullptr) : json(version)}};
@@ -1445,7 +1486,7 @@ std::string handle(Omc& omc, const std::string& message, const Session& session)
       out["result"] = op_simulate(omc, in);
     } else {
       out["ok"] = false;
-      out["error"] = "unknown op; squero/0 has omc, open, workspace, about, create_class, new_package, duplicate_class, delete_class, delete_package, move_class, read_file, save, check_model, instantiate_model, get_messages, icon, set_icon, generate, export, simulate";
+      out["error"] = "unknown op; squero/0 has omc, open, workspace, config, config_write, about, create_class, new_package, duplicate_class, delete_class, delete_package, move_class, read_file, save, check_model, instantiate_model, get_messages, icon, set_icon, generate, export, simulate";
       return out.dump();
     }
     out["ok"] = true;
