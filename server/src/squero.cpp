@@ -1332,7 +1332,83 @@ std::map<std::string, bool> top_inputs(Omc& omc, const std::string& model) {
   return out;
 }
 
-json op_simulate(Omc& omc, const json& in) {
+// --- a run's processes -------------------------------------------------------------------------
+// omc compiles a model (make, gcc, ld) and runs its executable in its own work folder. Natively
+// and in podman (the folder is mounted at the same path, the processes are the user's) they show
+// in /proc with that folder as their cwd: how Simulate tells compiling from simulating, and how
+// Cancel stops it. omc itself and a container's init live there too and are left alone.
+
+std::atomic<bool> g_cancelled{false};
+
+struct RunProc {
+  int pid;
+  bool simulator;  // the model's executable (in the work folder), not the compiler
+};
+
+std::vector<RunProc> run_processes(const std::string& workdir) {
+  std::vector<RunProc> out;
+#ifdef __linux__
+  static const std::set<std::string> keep = {"omc", "catatonit", "tini", "docker-init", "conmon", "podman", "sh", "bash"};
+  std::error_code ec;
+  for (const auto& e : fs::directory_iterator("/proc", ec)) {
+    const std::string name = e.path().filename().string();
+    if (name.empty() || !std::all_of(name.begin(), name.end(), [](char c) { return std::isdigit(static_cast<unsigned char>(c)); })) continue;
+    std::error_code ignore;
+    if (fs::read_symlink(e.path() / "cwd", ignore).string() != workdir) continue;
+    std::ifstream comm_file(e.path() / "comm");
+    std::string comm;
+    std::getline(comm_file, comm);
+    if (keep.contains(comm)) continue;
+    const std::string exe = fs::read_symlink(e.path() / "exe", ignore).string();
+    out.push_back({std::stoi(name), exe.starts_with(workdir + "/")});
+  }
+#else
+  (void)workdir;  // ponytail: /proc only; Cancel and the phase need Linux for now
+#endif
+  return out;
+}
+
+/** Cancel: stop whatever the run has going in omc's work folder, for a second (make starts the next step). */
+json op_cancel(const Omc& omc) {
+  g_cancelled = true;
+  int stopped = 0;
+#ifdef __linux__
+  for (int i = 0; i < 10; ++i) {
+    for (const auto& p : run_processes(omc.workdir())) stopped += ::kill(p.pid, SIGTERM) == 0;
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+#endif
+  return json{{"stopped", stopped}};
+}
+
+json simulate_run(Omc& omc, const json& in);
+
+json op_simulate(Omc& omc, const json& in, const Session& session) {
+  g_cancelled = false;
+  // While omc works, say whether it compiles or simulates (progress pushes for this request).
+  std::jthread watch([&](std::stop_token stop) {
+    if (!session.push) return;
+    std::string said;
+    while (!stop.stop_requested()) {
+      const auto procs = run_processes(omc.workdir());
+      const std::string stage = std::any_of(procs.begin(), procs.end(), [](const RunProc& p) { return p.simulator; }) ? "simulating"
+                                : procs.empty() ? said : "compiling";
+      if (!stage.empty() && stage != said) {
+        session.push(json{{"op", "progress"}, {"id", in.value("id", json())}, {"stage", stage}, {"fraction", 0}}.dump());
+        said = stage;
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(150));
+    }
+  });
+  try {
+    return simulate_run(omc, in);
+  } catch (const std::exception&) {
+    if (g_cancelled) throw std::runtime_error("cancelled");
+    throw;
+  }
+}
+
+json simulate_run(Omc& omc, const json& in) {
   const std::string model = user_model(in);
   const double stop = in.value("stop", 1.0);
   if (!(stop > 0.0) || !std::isfinite(stop)) throw std::runtime_error("stop time must be above 0");
@@ -1500,6 +1576,12 @@ std::string handle(Omc& omc, const std::string& message, const Session& session)
   }
   json out{{"id", in.value("id", json())}};
   const std::string op = in.value("op", "");
+  // Cancel comes on its own connection while a run holds this one; it never asks omc anything.
+  if (op == "cancel") {
+    out["ok"] = true;
+    out["result"] = op_cancel(omc);
+    return out.dump();
+  }
   // A client asking for getErrorString wants the messages from the previous operation, which
   // the log drain already read. Everything else starts a fresh read.
   const bool errors_read = op == "omc" && in.contains("expr") && in["expr"].is_string() &&
@@ -1564,10 +1646,10 @@ std::string handle(Omc& omc, const std::string& message, const Session& session)
     } else if (op == "export") {
       out["result"] = op_export(omc, in, session);
     } else if (op == "simulate") {
-      out["result"] = op_simulate(omc, in);
+      out["result"] = op_simulate(omc, in, session);
     } else {
       out["ok"] = false;
-      out["error"] = "unknown op; squero/0 has omc, open, workspace, config, config_write, about, create_class, new_package, duplicate_class, delete_class, delete_package, move_class, read_file, save, check_model, instantiate_model, get_messages, icon, set_icon, generate, export, simulate";
+      out["error"] = "unknown op; squero/0 has omc, open, workspace, config, config_write, about, create_class, new_package, duplicate_class, delete_class, delete_package, move_class, read_file, save, check_model, instantiate_model, get_messages, icon, set_icon, generate, export, simulate, cancel";
       return out.dump();
     }
     out["ok"] = true;

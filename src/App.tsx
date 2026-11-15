@@ -2,8 +2,9 @@
 // stubs declare: the popover on a component click, the sheet on Alt+V, the dock always.
 
 import { ReactFlowProvider } from "@xyflow/react";
-import { CommandSearch, Switch } from "@paperboat/shared/components";
-import { SEARCH_CHORD, useShortcuts, type Command } from "@paperboat/shared";
+import { CommandSearch, HelpWindow, Switch } from "@paperboat/shared/components";
+import { helpCommand, SEARCH_CHORD, useShortcuts, type Command } from "@paperboat/shared";
+import { omHelp } from "./shell/help.ts";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { useSqueroConfig, type ConfigStore } from "@paperboat/shared/editor";
 import { Canvas } from "./canvas/Canvas.tsx";
@@ -115,6 +116,7 @@ function Studio({ omc, status }: { omc: OmcClient; status: OmcStatus }) {
   const [libraryModalOpen, setLibraryModalOpen] = useState(false);
   const [packagesOpen, setPackagesOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [helpQuery, setHelpQuery] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false); // the command search (Ctrl+K)
   const [logs, setLogs] = useState<Log[]>([]);
   const [consoleShown, setConsoleShown] = useState(false);
@@ -513,6 +515,17 @@ function Studio({ omc, status }: { omc: OmcClient; status: OmcStatus }) {
     if (part) api?.select([part]);
   };
 
+  // F1: the selected text, else the class of the selected part, read when the key is pressed.
+  const latestApi = useRef(api);
+  latestApi.current = api;
+  const helpContext = () => {
+    const text = window.getSelection()?.toString().trim();
+    if (text) return text.split("\n")[0].slice(0, 120);
+    const now = latestApi.current;
+    const part = now?.model?.components.find((c) => now.selection.includes(c.name));
+    return part?.class ?? "";
+  };
+
   const commands = useMemo<Command[]>(
     () => [
       // File menu (Issue #11)
@@ -660,6 +673,8 @@ function Studio({ omc, status }: { omc: OmcClient; status: OmcStatus }) {
 
       // View menu
       { id: "view.search", label: "Command search…", menu: "view", group: "search", shortcut: "Ctrl+K", chord: SEARCH_CHORD, quiet: true, run: () => setSearchOpen(true) },
+      { id: "simulate", label: "Simulate", menu: "run", group: "simulate", shortcut: "Ctrl+Enter", chord: { key: "enter", ctrl: true }, enabled: !!model && !running, why: running ? "a simulation is running" : "open a model first", run: () => (setSide(true), requestAnimationFrame(() => window.dispatchEvent(new Event("squero:simulate")))) },
+      { id: "cancel-simulate", label: "Cancel simulation", menu: "run", group: "simulate", shortcut: "Ctrl+C", enabled: running, why: "no simulation is running", run: () => window.dispatchEvent(new Event("squero:cancel")) },
       { id: "solver", label: "Solver settings…", menu: "run", group: "solver", run: () => (setSide(true), window.dispatchEvent(new Event("squero:solver"))) },
       { id: "rail", label: "Files and library", menu: "view", group: "panes", checked: !railHidden, run: () => setRailHidden((v) => !v) },
       { id: "side", label: "Source and Simulate", menu: "view", group: "panes", checked: side, run: () => setSide((s) => !s) },
@@ -670,11 +685,13 @@ function Studio({ omc, status }: { omc: OmcClient; status: OmcStatus }) {
       { id: "console", label: "Console", menu: "view", group: "sheet", checked: consoleShown, run: toggleConsole },
       { id: "sheet", label: "Interface sheet", menu: "view", group: "sheet", shortcut: "Alt+V", chord: { key: "v", alt: true }, run: () => setSheet((s) => !s) },
       ...THEMES.map((t): Command => ({ id: `theme-${t}`, label: t, menu: "view", group: "theme", checked: theme === t, run: () => setTheme(t) })),
+      helpCommand(() => setHelpQuery(helpContext())),
       { id: "about", label: "About Squero Studio", menu: "view", group: "about", run: () => setAboutOpen(true) },
     ],
-    [actions.canUndo, actions.canRedo, actions.undo, actions.redo, actions.newModel, actions.openFile, actions.save, actions.saveAs, side, railHidden, view, stageView, stageOptions, focus, theme, setTheme, model, api, consoleShown, consoleTab, messages.length, runCheck, openConsole, toggleConsole, saveCurrent, exportReady, exportWhy],
+    [actions.canUndo, running, actions.canRedo, actions.undo, actions.redo, actions.newModel, actions.openFile, actions.save, actions.saveAs, side, railHidden, view, stageView, stageOptions, focus, theme, setTheme, model, api, consoleShown, consoleTab, messages.length, runCheck, openConsole, toggleConsole, saveCurrent, exportReady, exportWhy],
   );
   useShortcuts(commands);
+  const helpProvider = useMemo(() => omHelp(omc), [omc]);
 
   return (
     <StudioContext.Provider value={api}>
@@ -703,6 +720,8 @@ function Studio({ omc, status }: { omc: OmcClient; status: OmcStatus }) {
           onConsole={toggleConsole}
           aboutShown={aboutOpen}
           onAbout={() => setAboutOpen(true)}
+          helpShown={helpQuery !== null}
+          onHelp={() => setHelpQuery("")}
           theme={theme}
           onTheme={setTheme}
           onStatusClick={() => setPackagesOpen(true)}
@@ -840,6 +859,7 @@ function Studio({ omc, status }: { omc: OmcClient; status: OmcStatus }) {
         )}
 
         {aboutOpen && <AboutModal omc={omc} status={status} onClose={() => setAboutOpen(false)} />}
+        {helpQuery !== null && <HelpWindow app="Squero Studio OM" provider={helpProvider} commands={commands} query={helpQuery} onClose={() => setHelpQuery(null)} />}
 
         {searchOpen && <CommandSearch commands={commands} onClose={() => setSearchOpen(false)} />}
 

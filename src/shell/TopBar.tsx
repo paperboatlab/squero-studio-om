@@ -27,6 +27,8 @@ export type TopBarProps = {
   onConsole?: () => void;
   aboutShown?: boolean;
   onAbout?: () => void;
+  helpShown?: boolean;
+  onHelp?: () => void;
 };
 
 const STATES: OmcState[] = ["checking", "ready", "failed"];
@@ -49,12 +51,15 @@ export function TopBar({
   onConsole,
   aboutShown = false,
   onAbout,
+  helpShown = false,
+  onHelp,
 }: TopBarProps) {
   return (
     <AppBar
       brand={<SqueroWordmark product="OM" name="OpenModelica" running={running} />}
       commands={commands}
       about={{ title: "About Squero Studio", shown: aboutShown, onOpen: () => onAbout?.() }}
+      help={onHelp && { shown: helpShown, onOpen: onHelp }}
       project={model ? { name: model, dirty } : undefined}
     >
       <BarEnd

@@ -119,7 +119,7 @@ const SCOPE_DRAG = "application/x-squero-scope";
 const ROW = 110; // px a grid row
 const GAP = 8;
 
-type Phase = { state: "idle" } | { state: "running"; since: number } | { state: "done"; ms: number } | { state: "failed" } | { state: "cancelled" };
+type Phase = { state: "idle" } | { state: "running"; since: number; stage: string } | { state: "done"; ms: number } | { state: "failed" } | { state: "cancelled" };
 
 export function Simulate({
   actions,
@@ -186,10 +186,11 @@ export function Simulate({
     const mine = ++ticket.current;
     const since = Date.now();
     setNow(since);
-    setPhase({ state: "running", since });
+    setPhase({ state: "running", since, stage: "starting" });
     setError("");
+    const onStage = (stage: string) => mine === ticket.current && setPhase((p) => (p.state === "running" ? { ...p, stage } : p));
     try {
-      const result = await actions.simulate(t, Object.fromEntries(Object.entries(stimuli).filter(([n]) => inputs.includes(n))), solver);
+      const result = await actions.simulate(t, Object.fromEntries(Object.entries(stimuli).filter(([n]) => inputs.includes(n))), solver, onStage);
       if (mine !== ticket.current) return;
       setRun(result);
       setRunVersion((v) => v + 1);
@@ -204,10 +205,34 @@ export function Simulate({
       setPhase({ state: "failed" });
     }
   };
+  /** Stop omc's compile or the model's executable; the run's reply is then dropped. */
   const cancel = () => {
     ticket.current++;
     setPhase({ state: "cancelled" });
+    void actions.cancelSimulate();
   };
+  // Run ▸ Simulate (Ctrl+Enter) and Run ▸ Cancel simulation reach here as events, like the solver's.
+  const latest = useRef({ go, cancel, running: false });
+  latest.current = { go, cancel, running: phase.state === "running" };
+  useEffect(() => {
+    const start = () => !latest.current.running && void latest.current.go();
+    const stop = () => latest.current.running && latest.current.cancel();
+    // Ctrl+C stops a simulation, as in MX, while there is nothing selected to copy.
+    const key = (e: KeyboardEvent) => {
+      if (!latest.current.running || !e.ctrlKey || e.shiftKey || e.altKey || e.key.toLowerCase() !== "c") return;
+      if (window.getSelection()?.toString() || document.querySelector(".react-flow__node.selected")) return;
+      e.preventDefault();
+      latest.current.cancel();
+    };
+    window.addEventListener("squero:simulate", start);
+    window.addEventListener("squero:cancel", stop);
+    window.addEventListener("keydown", key);
+    return () => {
+      window.removeEventListener("squero:simulate", start);
+      window.removeEventListener("squero:cancel", stop);
+      window.removeEventListener("keydown", key);
+    };
+  }, []);
 
   const cell = (e: DragEvent): [number, number] => {
     const box = gridRef.current!.getBoundingClientRect();
@@ -216,10 +241,10 @@ export function Simulate({
   const area = (p: { col: number; row: number; w: number; h: number }): CSSProperties => ({ gridColumn: `${p.col + 1} / span ${p.w}`, gridRow: `${p.row + 1} / span ${p.h}` });
   const rows = Math.max(1, rowsOf(a, page));
   const status =
-    phase.state === "running" ? `simulating… ${((now - phase.since) / 1000).toFixed(1)} s`
+    phase.state === "running" ? `${phase.stage}… ${((now - phase.since) / 1000).toFixed(1)} s`
     : phase.state === "done" ? `completed in ${phase.ms} ms`
     : phase.state === "failed" ? "error"
-    : phase.state === "cancelled" ? "cancelled (omc finishes that run before the next)"
+    : phase.state === "cancelled" ? "cancelled"
     : "";
 
   return (
