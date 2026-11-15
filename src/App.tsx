@@ -228,6 +228,11 @@ function Studio({ omc, status }: { omc: OmcClient; status: OmcStatus }) {
   }, []);
   const gitRoot = workspace?.root;
   const savedState = `${actions.dirty}|${textDirty}`;
+  const workingFile = model?.file ? model.file.slice(model.file.lastIndexOf("/") + 1) : model?.name;
+  const fileDirty = actions.dirty || textDirty;
+  useEffect(() => {
+    document.title = workingFile ? `${fileDirty ? "● " : ""}${workingFile} · Squero Studio` : "Squero Studio";
+  }, [workingFile, fileDirty]);
   useEffect(() => {
     if (!gitRoot) { setGit(null); return; }
     let live = true;
