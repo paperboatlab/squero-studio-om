@@ -673,6 +673,8 @@ function Studio({ omc, status }: { omc: OmcClient; status: OmcStatus }) {
 
       // View menu
       { id: "view.search", label: "Command search…", menu: "view", group: "search", shortcut: "Ctrl+K", chord: SEARCH_CHORD, quiet: true, run: () => setSearchOpen(true) },
+      { id: "simulate", label: "Simulate", menu: "run", group: "simulate", shortcut: "Ctrl+Enter", chord: { key: "enter", ctrl: true }, enabled: !!model && !running, why: running ? "a simulation is running" : "open a model first", run: () => (setSide(true), requestAnimationFrame(() => window.dispatchEvent(new Event("squero:simulate")))) },
+      { id: "cancel-simulate", label: "Cancel simulation", menu: "run", group: "simulate", shortcut: "Ctrl+C", enabled: running, why: "no simulation is running", run: () => window.dispatchEvent(new Event("squero:cancel")) },
       { id: "solver", label: "Solver settings…", menu: "run", group: "solver", run: () => (setSide(true), window.dispatchEvent(new Event("squero:solver"))) },
       { id: "rail", label: "Files and library", menu: "view", group: "panes", checked: !railHidden, run: () => setRailHidden((v) => !v) },
       { id: "side", label: "Source and Simulate", menu: "view", group: "panes", checked: side, run: () => setSide((s) => !s) },
@@ -686,7 +688,7 @@ function Studio({ omc, status }: { omc: OmcClient; status: OmcStatus }) {
       helpCommand(() => setHelpQuery(helpContext())),
       { id: "about", label: "About Squero Studio", menu: "view", group: "about", run: () => setAboutOpen(true) },
     ],
-    [actions.canUndo, actions.canRedo, actions.undo, actions.redo, actions.newModel, actions.openFile, actions.save, actions.saveAs, side, railHidden, view, stageView, stageOptions, focus, theme, setTheme, model, api, consoleShown, consoleTab, messages.length, runCheck, openConsole, toggleConsole, saveCurrent, exportReady, exportWhy],
+    [actions.canUndo, running, actions.canRedo, actions.undo, actions.redo, actions.newModel, actions.openFile, actions.save, actions.saveAs, side, railHidden, view, stageView, stageOptions, focus, theme, setTheme, model, api, consoleShown, consoleTab, messages.length, runCheck, openConsole, toggleConsole, saveCurrent, exportReady, exportWhy],
   );
   useShortcuts(commands);
   const helpProvider = useMemo(() => omHelp(omc), [omc]);

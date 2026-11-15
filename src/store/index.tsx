@@ -51,7 +51,10 @@ export type Actions = {
   preview(): Promise<{ path: "ode" | "fmu"; reason: string; files: Record<string, string>; notices: string[] }>;
   /** A local check run: every variable over [0, stop]; each top-level input fed its stimulus (0 when not given). */
   /** `shapes`: a MultiBody model's visual shapes, for the 3D view. */
-  simulate(stop: number, inputs?: Record<string, Stimulus>, solver?: SolverChoice): Promise<{ t: number[]; series: Record<string, (number | null)[]>; names: string[]; shapes?: Shape[] }>;
+  /** `onStage`: compiling, then simulating, as the server sees them. */
+  simulate(stop: number, inputs?: Record<string, Stimulus>, solver?: SolverChoice, onStage?: (stage: string) => void): Promise<{ t: number[]; series: Record<string, (number | null)[]>; names: string[]; shapes?: Shape[] }>;
+  /** Stop the running simulation; its simulate() rejects with "cancelled". */
+  cancelSimulate(): Promise<void>;
   dirty: boolean;
   save(file?: string): Promise<void>;
   saveAs(file: string): Promise<void>;
@@ -325,11 +328,12 @@ export function useStudioStore(omc: OmcClient, status: OmcStatus): { api: Studio
           return r.text;
         });
       },
-      simulate(stop, inputs = {}, solver) {
+      simulate(stop, inputs = {}, solver, onStage) {
         const m = current.current;
         if (!m) return Promise.reject(new Error("no model"));
-        return omc.op("simulate", { model: m.name, stop, inputs, ...solver });
+        return omc.op("simulate", { model: m.name, stop, inputs, ...solver }, onStage && ((stage) => onStage(stage)));
       },
+      cancelSimulate: () => omc.cancel(),
       async source() {
         const m = current.current;
         if (!m) return "";

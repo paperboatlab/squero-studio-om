@@ -18,6 +18,7 @@ export type OmcCalls = Pick<OmcClient, 'call' | 'op'>;
 export class OmcClient {
   status: OmcStatus = {state: 'checking', version: ''};
   private readonly ws: WebSocket;
+  private readonly url: string;
   private readonly waiting = new Map<number, Waiter>();
   private next = 1;
   private closing = false;
@@ -29,6 +30,7 @@ export class OmcClient {
 
   constructor(url: string, onStatus: (status: OmcStatus) => void = () => {}) {
     this.onStatus = onStatus;
+    this.url = url;
     this.ws = new WebSocket(url);
     this.open = new Promise((resolve, reject) => {
       this.ws.addEventListener('open', () => resolve(), {once: true});
@@ -59,6 +61,21 @@ export class OmcClient {
     return new Promise((resolve, reject) => {
       this.waiting.set(id, {resolve, reject, progress});
       this.ws.send(JSON.stringify({id, ...message}));
+    });
+  }
+
+  /**
+   * Stop a running simulation (its compile or its executable). It goes on a connection of its
+   * own: this one waits for the run's reply, and the server answers one message at a time per connection.
+   */
+  cancel(): Promise<void> {
+    return new Promise((resolve) => {
+      const side = new WebSocket(this.url);
+      const done = () => (side.close(), resolve());
+      side.onopen = () => side.send(JSON.stringify({id: 0, op: 'cancel'}));
+      side.onmessage = (event) => (JSON.parse(String(event.data)) as Reply).id === 0 && done();
+      side.onerror = done;
+      setTimeout(done, 5000);
     });
   }
 
