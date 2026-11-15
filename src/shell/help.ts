@@ -1,21 +1,13 @@
-// OM's side of the shared Help window: a few guide pages, the canvas gestures, and every
-// Modelica class omc has loaded, with its documentation annotation (Documentation(info=…)).
+// OM's side of the shared Help window: its manual and Paperboat's (paperboatlab.github.io), the
+// canvas gestures, and every Modelica class omc has loaded, with its documentation annotation
+// (Documentation(info=…)).
 import { CANVAS_GESTURES } from "@paperboat/shared/components";
-import { matches, type HelpItem, type HelpPage, type HelpProvider } from "@paperboat/shared";
+import { combineHelp, docsHelp, DOCS_URL, loadDocs, matches, type HelpItem, type HelpPage, type HelpProvider } from "@paperboat/shared";
 import { atom, list, parseValue } from "../omc/parse.ts";
 import type { OmcCalls } from "../omc/omc.ts";
 import { flat, search } from "../library/classes.ts";
 
 const GUIDES: (HelpItem & { text: string })[] = [
-  {
-    id: "guide:start", title: "Getting started", kind: "guide", summary: "models, the library, check and simulate",
-    text: `Squero Studio OM edits Modelica models with OpenModelica (omc) behind it.
-
-- Open a \`.mo\` file from the files rail, or File › New Model.
-- Drag parts from the library onto the canvas and wire their ports; the source follows every edit.
-- The dock under the canvas counts equations and unknowns; Check asks omc to check the model.
-- The side pane shows the source and the scopes; Run › Simulate runs the model and plots it.`,
-  },
   {
     id: "guide:canvas", title: "On the canvas", kind: "guide", summary: "gestures and keys",
     text: CANVAS_GESTURES.map(([what, how]) => `- ${what}: ${how}`).join("\n"),
@@ -28,11 +20,20 @@ Type a class name (\`Resistor\`) or a full path (\`Modelica.Blocks.Continuous.PI
   },
 ];
 
+/** The org's docs site; VITE_DOCS_URL points Help at another build (a local one, to try docs out). */
+const DOCS: string = import.meta.env?.VITE_DOCS_URL ?? DOCS_URL;
+/** OM's manual and the engine's, fetched on Help's first look. */
+const omDocs = () => docsHelp(() => loadDocs((s) => s.site === "apps/squero-studio-om" || s.site === "paperboat", DOCS), DOCS);
+
 const CLASS = "class:";
 const NAME = /^[A-Za-z_][\w]*(\.[A-Za-z_][\w]*)*$/;
 
-/** The Help provider: guides first, then loaded classes found by short name or path. */
-export function omHelp(omc: OmcCalls): HelpProvider {
+/** The Help provider: the manuals, the guides, then loaded classes found by short name or path. */
+export function omHelp(omc: OmcCalls, docs: HelpProvider = omDocs()): HelpProvider {
+  return combineHelp(docs, classHelp(omc));
+}
+
+function classHelp(omc: OmcCalls): HelpProvider {
   let names: Promise<string[]> | null = null;
   const loadNames = () => {
     names ??= (async () => {
