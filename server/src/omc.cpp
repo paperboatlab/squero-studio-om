@@ -645,7 +645,7 @@ const std::vector<std::string>& allowed_calls() {
       "getConnectionCount", "getNthConnection", "checkModel", "instantiateModel", "addComponent", "deleteComponent", "addConnection",
       "deleteConnection", "setComponentModifierValue", "list", "dumpXMLDAE", "buildModelFMU", "getVersion",
       "getErrorString",  // read-only, how a client words a failed call
-      "isPartial", "getSourceFile", "getClassComment",  // read-only: the library tree and open
+      "isPartial", "getSourceFile", "getClassComment", "getDocumentationAnnotation",  // read-only: the library tree, open and Help
       "getComponentModifierNames", "getNthConnectionAnnotation", "getParameterNames", "getParameterValue",  // read-only: the canvas
       "setParameterValue", "setComponentProperties", "updateComponent", "updateConnection"};  // edits, like the rest, of the class named
   return calls;
