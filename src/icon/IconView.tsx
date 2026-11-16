@@ -622,13 +622,13 @@ export function IconView() {
             <div className="studio-preview-pair">
               <div className="studio-preview-tile" data-theme="light">
                 <ReactFlowProvider>
-                  <CompactBlock id={`${shortModel}-light`} def={linkedBlockDef} params={{}} selected={false} onExpand={() => {}} popover={null} connectors={api.model.connectors} />
+                  <CompactBlock id={`${shortModel}-light`} def={linkedBlockDef} params={{}} selected={false} connectors={api.model.connectors} />
                 </ReactFlowProvider>
                 <span className="studio-preview-caption">light</span>
               </div>
               <div className="studio-preview-tile" data-theme="dark">
                 <ReactFlowProvider>
-                  <CompactBlock id={`${shortModel}-dark`} def={linkedBlockDef} params={{}} selected={false} onExpand={() => {}} popover={null} connectors={api.model.connectors} />
+                  <CompactBlock id={`${shortModel}-dark`} def={linkedBlockDef} params={{}} selected={false} connectors={api.model.connectors} />
                 </ReactFlowProvider>
                 <span className="studio-preview-caption">dark</span>
               </div>
