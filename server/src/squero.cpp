@@ -882,26 +882,32 @@ std::string paperboat_bin() {
 #endif
 }
 
+// What `paperboat <args>` prints on stdout, or "" when it can't be run. `args` are plain words.
+std::string paperboat_output(const std::string& args) {
+  std::string out;
+#ifdef _WIN32
+  // _popen runs `cmd /c <cmd>`, which strips one outer pair of quotes: hence the extra pair.
+  const std::string cmd = "\"\"" + paperboat_bin() + "\" " + args + " 2>NUL\"";
+  if (FILE* p = _popen(cmd.c_str(), "r")) {
+    char line[512];
+    while (std::fgets(line, sizeof line, p)) out += line;
+    _pclose(p);
+  }
+#else
+  const std::string cmd = "\"" + paperboat_bin() + "\" " + args + " 2>/dev/null";
+  if (FILE* p = popen(cmd.c_str(), "r")) {
+    char line[512];
+    while (std::fgets(line, sizeof line, p)) out += line;
+    pclose(p);
+  }
+#endif
+  return out;
+}
+
 // The installed paperboat's version, or "" when it can't be run. Cached: About asks once.
 std::string paperboat_version() {
   static const std::string version = [] {
-    std::string out;
-#ifdef _WIN32
-    // _popen runs `cmd /c <cmd>`, which strips one outer pair of quotes: hence the extra pair.
-    const std::string cmd = "\"\"" + paperboat_bin() + "\" --version 2>NUL\"";
-    if (FILE* p = _popen(cmd.c_str(), "r")) {
-      char line[512];
-      while (std::fgets(line, sizeof line, p)) out += line;
-      _pclose(p);
-    }
-#else
-    const std::string cmd = "\"" + paperboat_bin() + "\" --version 2>/dev/null";
-    if (FILE* p = popen(cmd.c_str(), "r")) {
-      char line[512];
-      while (std::fgets(line, sizeof line, p)) out += line;
-      pclose(p);
-    }
-#endif
+    const std::string out = paperboat_output("--version");
     const auto first = out.find_first_not_of(" \t\r\n");
     if (first == std::string::npos) return std::string();
     const auto end = out.find_first_of("\r\n", first);
@@ -1185,7 +1191,20 @@ json serve_status(int port, std::size_t offset) {
       at += chunk.size();
     }
   }
-  return json{{"port", port}, {"name", log.stem().string()}, {"state", state}, {"log", chunk}, {"offset", at}, {"tail", log_tail(log)}};
+  json out{{"port", port}, {"name", log.stem().string()}, {"state", state}, {"log", chunk}, {"offset", at}, {"tail", log_tail(log)}};
+  // While it builds, paperboat says how far (pb#332): stage (prepare, configure, compile, waiting),
+  // elapsed seconds, and a failure's one-line error. Absent with a paperboat older than `status`.
+  if (state == "building") {
+    try {
+      for (const auto& b : json::parse(paperboat_output("status " + std::to_string(port) + " --json")).value("backends", json::array()))
+        if (b.value("port", 0) == port && b.value("state", "") != "running") {
+          for (const char* key : {"stage", "elapsed", "error"})
+            if (b.contains(key)) out[key] = b[key];
+          if (b.value("state", "") == "failed") out["failed"] = true;
+        }
+    } catch (...) {}
+  }
+  return out;
 }
 
 // "stop": `paperboat stop <port>` once it listens, then the rest of its session (a build in flight).

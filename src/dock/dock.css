@@ -191,4 +191,7 @@
 }
 
 .studio-dock-stage.backend-ready { color: var(--ok, var(--signal)); }
+/* Building: the shared busy wave before paperboat's stage and clock (pb#332); failed: its one line, in the danger ink. */
+.studio-dock-stage .wave { margin-right: var(--space-2); }
+.studio-dock-stage.backend-failed { color: var(--danger-text); }
 .studio-dock-stage.backend-wait { color: var(--signal); }

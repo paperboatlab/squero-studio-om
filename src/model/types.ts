@@ -73,6 +73,11 @@ export type ExportResult = {
   log?: string;
   tail?: string;
   offset?: number;
+  /** While building, what `paperboat status` says (pb#332): the stage, seconds since the start, a failure's one line. */
+  stage?: "prepare" | "configure" | "compile" | "waiting";
+  elapsed?: number;
+  error?: string;
+  failed?: boolean;
 };
 
 export interface StudioApi {

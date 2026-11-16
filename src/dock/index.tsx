@@ -31,7 +31,7 @@ export function StudioDock({
     ratio: "… / …",
     words: "checking balance…",
   });
-  const [running, setRunning] = useState<{ port: number; up: boolean; ready?: boolean; line?: string } | null>(null);
+  const [running, setRunning] = useState<{ port: number; up: boolean; ready?: boolean; line?: string; stage?: string; elapsed?: number; error?: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<ExportProgress | null>(null);
   const [outcome, setOutcome] = useState<ExportOutcome | null>(null);
@@ -123,7 +123,8 @@ export function StudioDock({
         }
         if (res.ok && res.result.state === "building") {
           const line = (logPending.current || chunk).trim().split("\n").pop();
-          return setRunning((r) => (r && r.port === pollPort ? { ...r, line } : r));
+          const { stage, elapsed, error } = res.result;
+          return setRunning((r) => (r && r.port === pollPort ? { ...r, line, stage, elapsed, error: res.result.failed ? error : undefined } : r));
         }
         if (!res.ok) {
           if (res.result?.tail && !chunk.includes(res.result.tail)) onLog?.(res.result.tail.trimEnd(), "error");
@@ -160,9 +161,15 @@ export function StudioDock({
       ws?.close();
     };
   }, [probePort]);
+  // While it builds, paperboat's own stage and clock (pb#332), else the log's last line.
+  const STAGE: Record<string, string> = { prepare: "preparing", configure: "configuring", compile: "compiling", waiting: "starting" };
   const backendWords = !running
     ? null
-    : !running.up
+    : running.error
+      ? `the backend failed: ${running.error}`
+      : !running.up && running.stage
+        ? `${STAGE[running.stage] ?? "building"} the backend for :${running.port}…${running.elapsed !== undefined ? ` ${Math.floor(running.elapsed)}s` : ""}`
+        : !running.up
       ? `building for :${running.port}${running.line ? `: ${running.line.slice(0, 90)}` : "…"}`
       : !running.ready
         ? `started on :${running.port}, waiting for it to answer…`
@@ -256,7 +263,12 @@ export function StudioDock({
       {(progress || outcome || fixError || backendWords) && (
         <div className="studio-dock-row">
           {progress && <span className="studio-dock-stage">{progress.stage}</span>}
-          {backendWords && !progress && <span className={`studio-dock-stage backend-${running?.ready ? "ready" : "wait"}`}>{backendWords}</span>}
+          {backendWords && !progress && (
+            <span className={`studio-dock-stage backend-${running?.error ? "failed" : running?.ready ? "ready" : "wait"}`}>
+              {running && !running.up && !running.error && <span className="wave" aria-hidden="true"><i /><i /><i /><i /><i /></span>}
+              {backendWords}
+            </span>
+          )}
           {outcome && (
             <span className={`studio-dock-result${outcome.ok ? "" : " error"}`}>
               {outcome.line}
