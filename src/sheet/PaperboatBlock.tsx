@@ -47,7 +47,7 @@ export function PaperboatBlock() {
     <div className="paperboat-block">
       <div className="paperboat-block-preview">
         <ReactFlowProvider>
-          <CompactBlock id="paperboat-block" def={def} params={{}} selected={false} onExpand={() => {}} popover={null} connectors={api.model.connectors} />
+          <CompactBlock id="paperboat-block" def={def} params={{}} selected={false} connectors={api.model.connectors} />
         </ReactFlowProvider>
       </div>
       <div className="paperboat-block-ports">

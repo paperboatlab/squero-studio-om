@@ -37,7 +37,6 @@ type PartNode = Node<PartData, "part">;
 type WireData = { points?: WirePoint[]; wire: Connection; flipped: boolean; kind: string; causal: boolean; missing: boolean; color?: string };
 type WireEdge = Edge<WireData, "wire">;
 
-const noop = () => undefined;
 
 /** The model's own connector seen from inside: its input feeds the parts (a wire's source), its output takes one in. */
 function inside(connectors: Connectors, part: ComponentInst): Connectors {
@@ -50,7 +49,7 @@ function inside(connectors: Connectors, part: ComponentInst): Connectors {
 function PartView({ id, data, selected }: NodeProps<PartNode>) {
   const { part, icon, connectors, wires } = data;
   const def = useMemo<BlockDef>(() => ({ type: part.class, label: part.name, kind: "function", inputs: [], outputs: [], params: [], view: { compact: true, icon } }), [part.class, part.name, icon]);
-  return <CompactBlock id={id} def={def} params={{ ...part.defaults, ...part.params }} selected={selected} onExpand={noop} popover={null} connectors={connectors} wires={wires} />;
+  return <CompactBlock id={id} def={def} params={{ ...part.defaults, ...part.params }} selected={selected} connectors={connectors} wires={wires} />;
 }
 
 /** Save a wire's dragged bends (in the model's a-to-b order). */
