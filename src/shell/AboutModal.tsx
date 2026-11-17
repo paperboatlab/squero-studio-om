@@ -31,7 +31,7 @@ export function AboutModal({ omc, status, onClose }: { omc: OmcClient; status: O
         { label: "Version", value: STUDIO_VERSION },
         { label: "Paperboat", value: paperboat === undefined ? "checking…" : paperboat ?? "Not installed" },
         { label: "OpenModelica", value: omcVersion || (status.state === "failed" ? "Not running" : "checking…") },
-        { label: "License", value: "All rights reserved" },
+        { label: "License", value: "GPL-3.0-only" },
       ]}
       credits={<>Built on <a href="https://openmodelica.org" target="_blank" rel="noreferrer">OpenModelica</a>{omcVersion ? ` ${omcVersion}` : ""}.</>}
       onClose={onClose}
