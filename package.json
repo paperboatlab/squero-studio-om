@@ -2,6 +2,7 @@
   "name": "squero-studio-om",
   "private": true,
   "version": "0.1.2",
+  "license": "GPL-3.0-only",
   "type": "module",
   "scripts": {
     "dev": "vite",

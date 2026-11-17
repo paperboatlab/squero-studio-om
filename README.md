@@ -67,3 +67,7 @@ npm run build
 `src/omc` squero/0 client · `src/store` the `StudioApi` (omc is the only source of truth for the
 model) · `src/library`, `canvas`, `split`, `simulate`, `shell` · `src/popover`, `sheet`, `dock` ·
 `src/model/types.ts` the seam between the two halves.
+
+## Licence
+
+GNU General Public License version 3 (see [LICENSE](LICENSE)).
