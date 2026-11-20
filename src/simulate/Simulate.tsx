@@ -1,6 +1,6 @@
-// Simulate (contracts §8.2): a local check, not a second Flow page. Scopes on Paperboat's dashboard
+// Simulate (contracts §8.2): a local check, not a second Flow page. Scopes on Paperboat's board
 // grid (#7), each plotting the channels picked in its dropdown, and Paperboat's floating run dock.
-// omc runs it; nothing leaves Studio and no block, board or backend is involved.
+// omc runs it; nothing leaves Studio and no block, board or station is involved.
 
 import {
   addDecoration,
@@ -20,7 +20,7 @@ import {
   setSettings,
   SIZE_LABEL,
   tabIsEmpty,
-  type DashboardLayout,
+  type BoardLayout,
 } from "@paperboat/shared";
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type DragEvent } from "react";
 import { createPortal } from "react-dom";
@@ -153,7 +153,7 @@ export function Simulate({
   const [error, setError] = useState("");
   const ticket = useRef(0);
   const key = `squero-scopes:${model.name}`;
-  const [layout, setLayout] = useState<DashboardLayout>(() => loadSaved(key) ?? START);
+  const [layout, setLayout] = useState<BoardLayout>(() => loadSaved(key) ?? START);
   useEffect(() => setLayout(loadSaved(key) ?? START), [key]);
   const [tab, setTab] = useState("");
   const a = arrangeScopes(layout);
@@ -163,7 +163,7 @@ export function Simulate({
   const [canvas, setCanvas] = useState<Element | null>(null);
   useLayoutEffect(() => setCanvas(document.querySelector(".studio .stage-view")), []);
 
-  const edit = (next: DashboardLayout) => {
+  const edit = (next: BoardLayout) => {
     setLayout(next);
     saveLayout(key, next);
   };

@@ -25,7 +25,7 @@ void print_help(std::string_view prog) {
   std::cout << "Squero Studio OM (" << SQUERO_VERSION << "): Modelica editor server & tools\n\n"
             << "Usage:\n"
             << "  " << prog << " [Model.mo] [options]                 Run Studio OM (squero/0 server & web app)\n"
-            << "  " << prog << " generate <Model.mo> [options]        Make a Paperboat backend from Modelica\n"
+            << "  " << prog << " generate <Model.mo> [options]        Make a Paperboat station from Modelica\n"
             << "  " << prog << " check <Model.mo> [--model <Name>]    omc's checkModel on Modelica model\n"
             << "  " << prog << " icon <Model.mo|Name> [--class <Name>] Import icon & connectors as JSON\n"
             << "  " << prog << " doctor                               Which omc runs (native, podman, docker) and its health\n"
@@ -37,7 +37,7 @@ void print_help(std::string_view prog) {
             << "  --version <V>    Target version tag\n\n"
             << "Generate options:\n"
             << "  --model <Name>   Qualified Modelica model name inside file\n"
-            << "  --out <dir>      Output backend directory (default: <model>-cpp/)\n"
+            << "  --out <dir>      Output station directory (default: <model>-cpp/)\n"
             << "  --path <path>    ode | fmu | auto (default: auto)\n";
 }
 

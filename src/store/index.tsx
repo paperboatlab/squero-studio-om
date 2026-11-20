@@ -47,7 +47,7 @@ export type Actions = {
   checkModel(): Promise<{reply: string; equations: number; unknowns: number; messages: Message[]}>;
   /** instantiateModel: the flat Modelica text, for the flat source view. */
   flatModel(): Promise<string>;
-  /** The generated backend without writing it: path and reason, and the files for the ODE path. */
+  /** The generated station without writing it: path and reason, and the files for the ODE path. */
   preview(): Promise<{ path: "ode" | "fmu"; reason: string; files: Record<string, string>; notices: string[] }>;
   /** A local check run: every variable over [0, stop]; each top-level input fed its stimulus (0 when not given). */
   /** `shapes`: a MultiBody model's visual shapes, for the 3D view. */
@@ -250,7 +250,7 @@ export function useStudioStore(omc: OmcClient, status: OmcStatus): { api: Studio
           await refresh();
         });
       },
-      async exportBackend(mode: ExportMode, onProgress: (p: ExportProgress) => void, port?: number, offset?: number): Promise<ExportResult> {
+      async exportStation(mode: ExportMode, onProgress: (p: ExportProgress) => void, port?: number, offset?: number): Promise<ExportResult> {
         return enqueue(async () => {
           if (!model.file) throw new Error("save the model to a file first");
           return omc.op<ExportResult>("export", { source: model.file, model: name, mode, port, offset, fmu_solver: fmuSolver(loadSolver(name)) }, (stage, fraction) =>

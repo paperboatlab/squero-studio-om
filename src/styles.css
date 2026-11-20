@@ -584,7 +584,7 @@ body.dragging-card .library {
 .side.focus-code > .simulate, .side.focus-scopes > .split { flex-grow: 0; opacity: 0; pointer-events: none; border-width: 0; margin: 0; }
 .side.focus-scopes > .simulate { margin-top: 0; }
 
-/* Scopes on the dashboard grid, and Paperboat's floating run dock (#7). */
+/* Scopes on the board grid, and Paperboat's floating run dock (#7). */
 .simulate { position: relative; display: flex; flex-direction: column; }
 .scope-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: var(--space-2) var(--space-3); }
 .scope-tabs { display: flex; gap: 2px; margin-right: auto; }

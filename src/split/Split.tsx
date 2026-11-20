@@ -1,5 +1,5 @@
 // The split view (contracts §8.2): the generated artifacts beside the canvas. `flat` is
-// instantiateModel's text, `causal ODE c++` the generated backend from a dry-run generate; both
+// instantiateModel's text, `causal ODE c++` the generated station from a dry-run generate; both
 // read-only. The model's own .mo is the stage's Text view, not a pane here.
 
 import { useEffect, useRef, useState } from "react";

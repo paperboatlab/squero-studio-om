@@ -288,7 +288,7 @@ export async function fixDanglingPort(api: StudioApi, item: DanglingPort): Promi
 }
 
 export function defaultExportFolder(modelName: string): string {
-  // the generator's backend_name (engine/modelica/src/generate.cpp): DCMotor -> dc-motor
+  // the generator's station_name (server/src/generate.cpp): DCMotor -> dc-motor
   const short = (modelName.split(".").pop() ?? modelName)
     .replace(/([a-z0-9])([A-Z])|([A-Z])([A-Z][a-z])/g, (_, a, b, c, d) => (a ? `${a}-${b}` : `${c}-${d}`))
     .replace(/[^A-Za-z0-9]+/g, "-")
@@ -315,14 +315,14 @@ function saveBase64(file: string, b64: string) {
 }
 
 export function serveLine(mode: ExportMode, r: ExportResult, port?: number): string {
-  if (mode === "stop") return `stopped backend on port ${port}`;
-  if (mode === "ppk") return `${r.file} downloaded · ${r.reason}`;
-  if (r.state === "running") return `${r.name ?? "backend"} running on port ${r.port}`;
-  if (r.state === "exited") return `backend on port ${r.port} exited:\n${r.tail ?? r.log ?? ""}`;
-  return `building ${r.name ?? "backend"} for port ${r.port}… (the first build compiles the engine: minutes)`;
+  if (mode === "stop") return `stopped station on port ${port}`;
+  if (mode === "pst") return `${r.file} downloaded · ${r.reason}`;
+  if (r.state === "running") return `${r.name ?? "station"} running on port ${r.port}`;
+  if (r.state === "exited") return `station on port ${r.port} exited:\n${r.tail ?? r.log ?? ""}`;
+  return `building ${r.name ?? "station"} for port ${r.port}… (the first build compiles the engine: minutes)`;
 }
 
-export async function runBackendExport(
+export async function runStationExport(
   api: StudioApi,
   mode: ExportMode,
   onProgress: (p: ExportProgress) => void,
@@ -330,8 +330,8 @@ export async function runBackendExport(
   offset?: number,
 ): Promise<ExportOutcome> {
   try {
-    const result = await api.exportBackend(mode, onProgress, port, offset);
-    if (result.ppk && result.file) saveBase64(result.file, result.ppk);
+    const result = await api.exportStation(mode, onProgress, port, offset);
+    if (result.pst && result.file) saveBase64(result.file, result.pst);
     const line = serveLine(mode, result, port);
     return result.state === "exited" ? { ok: false, result, line } : { ok: true, result, line };
   } catch (err) {

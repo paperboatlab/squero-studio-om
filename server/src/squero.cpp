@@ -853,7 +853,7 @@ std::string base64(const std::string& in) {
   return out;
 }
 
-// The paperboat console: $PAPERBOAT_BIN or the one on PATH.
+// The paperboat CLI: $PAPERBOAT_BIN or the one on PATH.
 std::string paperboat_bin() {
   const char* e = std::getenv("PAPERBOAT_BIN");
   if (e && *e) return e;
@@ -941,7 +941,7 @@ pid_t spawn_paperboat(const std::vector<std::string>& args, const fs::path& log)
     dup2(null, 0);
     dup2(fd, 1);
     dup2(fd, 2);
-    // nothing else of the server's: a backend that kept its listening socket would hold the
+    // nothing else of the server's: a station that kept its listening socket would hold the
     // server's port after the server is gone
     close_range(3, ~0U, 0);
     execvp(bin.c_str(), argv.data());
@@ -1041,7 +1041,7 @@ int run_paperboat_streaming(const std::vector<std::string>& args, const fs::path
 }
 
 // The prebuilt SDK for the checkout the paperboat binary came from, installing it once if it is
-// missing or older than the engine library. Without it every backend rebuilds the engine and all
+// missing or older than the engine library. Without it every station rebuilds the engine and all
 // its dependencies in its own build folder (minutes, and gigabytes).
 void ensure_engine_sdk(const Session& session) {
   if (const char* given = std::getenv("PAPERBOAT_SDK_DIR"); given && *given) return;
@@ -1095,7 +1095,7 @@ void ensure_engine_sdk(const Session& session) {
     const auto say = [&](const std::string& line) {
       if (session.push && !line.empty()) session.push(json{{"op", "log"}, {"level", "info"}, {"text", line}}.dump());
     };
-    say(config.empty() ? "installing the engine SDK once (every backend build reuses it)…" : "refreshing the engine SDK…");
+    say(config.empty() ? "installing the engine SDK once (every station build reuses it)…" : "refreshing the engine SDK…");
     const fs::path log = fs::temp_directory_path() / "ssom_sdk.log";
 #ifdef _WIN32
     // a multi-config build: install the configuration the library was built in
@@ -1106,7 +1106,7 @@ void ensure_engine_sdk(const Session& session) {
         "cmake", {"--install", build.string(), "--prefix", sdk.string(), "--component", "dev"}, log, say);
 #endif
     if (code != 0) {
-      say("engine SDK install failed; the backend will build the engine from source (slow)");
+      say("engine SDK install failed; the station will build the engine from source (slow)");
       return;
     }
     config = find_config();
@@ -1152,7 +1152,7 @@ bool listening(int port) {
   return ok;
 }
 
-// Backends started by "serve": port -> (`paperboat start` pid, its log).
+// Stations started by "serve": port -> (`paperboat start` pid, its log).
 std::mutex served_mutex;
 std::map<int, std::pair<pid_t, fs::path>> served;
 
@@ -1161,7 +1161,7 @@ std::map<int, std::pair<pid_t, fs::path>> served;
 json serve_status(int port, std::size_t offset) {
   std::lock_guard lock(served_mutex);
   const auto it = served.find(port);
-  if (it == served.end()) throw std::runtime_error("no backend started on port " + std::to_string(port));
+  if (it == served.end()) throw std::runtime_error("no station started on port " + std::to_string(port));
   const auto [pid, log] = it->second;
   std::string state = listening(port) ? "running" : "building";
 #ifdef _WIN32
@@ -1196,7 +1196,7 @@ json serve_status(int port, std::size_t offset) {
   // elapsed seconds, and a failure's one-line error. Absent with a paperboat older than `status`.
   if (state == "building") {
     try {
-      for (const auto& b : json::parse(paperboat_output("status " + std::to_string(port) + " --json")).value("backends", json::array()))
+      for (const auto& b : json::parse(paperboat_output("status " + std::to_string(port) + " --json")).value("stations", json::array()))
         if (b.value("port", 0) == port && b.value("state", "") != "running") {
           for (const char* key : {"stage", "elapsed", "error"})
             if (b.contains(key)) out[key] = b[key];
@@ -1216,7 +1216,7 @@ json serve_stop(int port) {
   std::lock_guard lock(served_mutex);
   if (const auto it = served.find(port); it != served.end()) {
 #ifdef _WIN32
-    win32::kill_tree(it->second.first);  // its job: the build or backend it started too
+    win32::kill_tree(it->second.first);  // its job: the build or station it started too
     win32::wait(it->second.first);
 #else
     kill(-it->second.first, SIGTERM);
@@ -1227,18 +1227,18 @@ json serve_stop(int port) {
   return json{{"port", port}, {"state", "stopped"}};
 }
 
-// Export without a folder of the user's, into <tmp>/ssom_<model>: mode "ppk" packs it and returns
+// Export without a folder of the user's, into <tmp>/ssom_<model>: mode "pst" packs it and returns
 // the archive (base64); "serve" starts it on the given port if free, else a free one and returns at once (poll "status": the
 // first start builds the engine, minutes); "stop" ends one.
 json op_export(Omc& omc, const json& in, const Session& session) {
-  const std::string mode = in.value("mode", "ppk");
+  const std::string mode = in.value("mode", "pst");
   if (mode == "status") return serve_status(in.value("port", 0), in.value("offset", 0));
   if (mode == "stop") return serve_stop(in.value("port", 0));
-  if (mode != "ppk" && mode != "serve") throw std::runtime_error("export mode is ppk, serve, status or stop");
+  if (mode != "pst" && mode != "serve") throw std::runtime_error("export mode is pst, serve, status or stop");
   const std::string model = user_model(in);
   const std::string restriction = text_of(omc.call("getClassRestriction(" + model + ")"));
   if (restriction != "model" && restriction != "block")
-    throw std::runtime_error("only a model or a block can be exported to a Paperboat backend");
+    throw std::runtime_error("only a model or a block can be exported to a Paperboat station");
   std::string stem = model;
   stem = stem.substr(stem.rfind('.') == std::string::npos ? 0 : stem.rfind('.') + 1);
   for (auto& c : stem) if (!std::isalnum(static_cast<unsigned char>(c))) c = '_';
@@ -1250,13 +1250,13 @@ json op_export(Omc& omc, const json& in, const Session& session) {
   json out = op_generate(omc, g, session);
   if (session.push) session.push(json{{"op", "progress"}, {"id", in.value("id", json())}, {"stage", "build"}, {"fraction", 0.8}}.dump());
   const fs::path log = dir.string() + ".log";
-  if (mode == "ppk") {
-    const fs::path ppk = dir.string() + ".ppk";
-    // pack verifies first, and the catalog check builds a C++ backend: minutes on a cold build/
+  if (mode == "pst") {
+    const fs::path pst = dir.string() + ".pst";
+    // pack verifies first, and the catalog check builds a C++ station: minutes on a cold build/
     const auto say = [&](const std::string& line) {
       if (session.push && !line.empty()) session.push(json{{"op", "log"}, {"level", "info"}, {"text", line}}.dump());
     };
-    const int code = run_paperboat_streaming({"pack", dir.string(), "--out", ppk.string(), "--json-stream"}, log, [&](const std::string& line) {
+    const int code = run_paperboat_streaming({"pack", dir.string(), "--out", pst.string(), "--json-stream"}, log, [&](const std::string& line) {
       // its JSON-stream lines are progress, not prose: show the readable milestones only
       try {
         const json e = json::parse(line);
@@ -1265,7 +1265,7 @@ json op_export(Omc& omc, const json& in, const Session& session) {
           if (total > 0 && (files == total || files % std::max(1, total / 10) == 0)) say("packing " + std::to_string(files) + "/" + std::to_string(total) + " files…");
         } else if (e.value("event", "") == "result") {
           if (e.value("ok", false))
-            say("packed " + e.value("name", std::string("backend")) + " · " + std::to_string(e.value("files", 0)) + " files");
+            say("packed " + e.value("name", std::string("station")) + " · " + std::to_string(e.value("files", 0)) + " files");
         } else {
           say(line);
         }
@@ -1274,9 +1274,9 @@ json op_export(Omc& omc, const json& in, const Session& session) {
       }
     });
     if (code != 0) throw paperboat_failed("pack", code, log);
-    std::ifstream f(ppk, std::ios::binary);
-    out["file"] = "ssom_" + stem + ".ppk";
-    out["ppk"] = base64(std::string(std::istreambuf_iterator<char>(f), {}));
+    std::ifstream f(pst, std::ios::binary);
+    out["file"] = "ssom_" + stem + ".pst";
+    out["pst"] = base64(std::string(std::istreambuf_iterator<char>(f), {}));
   } else {
     // a restart asks for the port it just left, so a paperboat tab on it reconnects
     const int want = in.value("port", 0);

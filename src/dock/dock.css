@@ -1,5 +1,5 @@
 /* Studio footer (contracts §8.3): balance readout, dangling flow connector fixes,
-   and Export backend with a 2px signal progress line across the top.
+   and Export station with a 2px signal progress line across the top.
    Uses semantic tokens from @paperboat/shared/tokens.css only. */
 
 .studio-dock,
@@ -190,8 +190,8 @@
   white-space: pre-wrap; /* paperboat's log tail */
 }
 
-.studio-dock-stage.backend-ready { color: var(--ok, var(--signal)); }
+.studio-dock-stage.station-ready { color: var(--ok, var(--signal)); }
 /* Building: the shared busy wave before paperboat's stage and clock (pb#332); failed: its one line, in the danger ink. */
 .studio-dock-stage .wave { margin-right: var(--space-2); }
-.studio-dock-stage.backend-failed { color: var(--danger-text); }
-.studio-dock-stage.backend-wait { color: var(--signal); }
+.studio-dock-stage.station-failed { color: var(--danger-text); }
+.studio-dock-stage.station-wait { color: var(--signal); }

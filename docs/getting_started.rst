@@ -5,8 +5,8 @@ Start it from the Paperboat CLI:
 
 .. code-block:: sh
 
-   paperboat start squero-studio-om [Model.mo]   # http://localhost:59201
-   paperboat stop squero-studio-om
+   paperboat squero start squero-studio-om [Model.mo]   # http://localhost:59201
+   paperboat squero stop squero-studio-om
 
 It listens on 59201, or the next free port up to 59299.
 

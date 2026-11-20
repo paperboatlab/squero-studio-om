@@ -60,16 +60,16 @@ export type StudioModel = {
 };
 
 export type ExportProgress = { stage: "check" | "flatten" | "generate" | "build"; fraction: number };
-export type ExportMode = "ppk" | "serve" | "status" | "stop";
+export type ExportMode = "pst" | "serve" | "status" | "stop";
 export type ExportResult = {
   path?: "ode" | "fmu";
   reason?: string;
   file?: string;
-  ppk?: string;
+  pst?: string;
   name?: string;
   port?: number;
   state?: "building" | "running" | "exited" | "stopped";
-  /** The backend log: new text since `offset` (a build streams its output here). */
+  /** The station log: new text since `offset` (a build streams its output here). */
   log?: string;
   tail?: string;
   offset?: number;
@@ -103,7 +103,7 @@ export interface StudioApi {
   removeEntry(name: string): Promise<void>;
   /** Writes the model's Icon annotation (Look tab). */
   setIcon(icon: IconDef): Promise<void>;
-  exportBackend(mode: ExportMode, onProgress: (p: ExportProgress) => void, port?: number, offset?: number): Promise<ExportResult>;
+  exportStation(mode: ExportMode, onProgress: (p: ExportProgress) => void, port?: number, offset?: number): Promise<ExportResult>;
 }
 
 export const StudioContext = createContext<StudioApi | null>(null);

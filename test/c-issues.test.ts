@@ -106,7 +106,7 @@ test("menu: File menu is the first menu and provides core model lifecycle comman
     { id: "file.save", label: "Save", menu: "file", group: "save", shortcut: "Ctrl+S", chord: { key: "s", ctrl: true }, run: () => {} },
     { id: "file.save-as", label: "Save As…", menu: "file", group: "save", shortcut: "Ctrl+Shift+S", chord: { key: "s", ctrl: true, shift: true }, run: () => {} },
     { id: "file.load-library", label: "Load Modelica Library…", menu: "file", group: "library", run: () => {} },
-    { id: "file.export", label: "Export Paperboat Backend", menu: "file", group: "export", shortcut: "Ctrl+E", chord: { key: "e", ctrl: true }, run: () => {} },
+    { id: "file.export", label: "Export Paperboat Station", menu: "file", group: "export", shortcut: "Ctrl+E", chord: { key: "e", ctrl: true }, run: () => {} },
     { id: "undo", label: "Undo", menu: "edit", group: "history", shortcut: "Ctrl+Z", run: () => {} },
     { id: "redo", label: "Redo", menu: "edit", group: "history", shortcut: "Ctrl+Shift+Z", run: () => {} },
     { id: "side", label: "Source and Simulate", menu: "view", group: "panes", run: () => {} },
@@ -122,7 +122,7 @@ test("menu: File menu is the first menu and provides core model lifecycle comman
   assert.ok(fileItemIds.includes("file.save"), "Save command registered");
   assert.ok(fileItemIds.includes("file.save-as"), "Save As command registered");
   assert.ok(fileItemIds.includes("file.load-library"), "Load Modelica Library command registered");
-  assert.ok(fileItemIds.includes("file.export"), "Export Paperboat Backend command registered");
+  assert.ok(fileItemIds.includes("file.export"), "Export Paperboat Station command registered");
 
   const saveCmd = menus[0].items.find((i) => i.id === "file.save")!;
   assert.equal(saveCmd.shortcut, "Ctrl+S");

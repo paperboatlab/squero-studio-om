@@ -25,7 +25,7 @@ export type RecordedCall = {
     | "addEntry"
     | "removeEntry"
     | "setIcon"
-    | "exportBackend"
+    | "exportStation"
     | "omc.call";
   args: unknown[];
 };
@@ -294,7 +294,7 @@ export function createFakeStudio(options: FakeStudioOptions = {}): FakeStudio {
     options.checkModelReply ?? DEFAULT_CHECK_REPLY;
   let exportSteps: ExportProgress[] = options.exportSteps ?? DEFAULT_EXPORT_STEPS;
   let exportResult: ExportResult | Error = options.exportResult ?? {
-    file: "ssom_rl_circuit.ppk",
+    file: "ssom_rl_circuit.pst",
     path: "ode",
     reason: "no events, no nonlinear torn systems, no external tables",
   };
@@ -451,8 +451,8 @@ export function createFakeStudio(options: FakeStudioOptions = {}): FakeStudio {
       notify();
     },
 
-    async exportBackend(mode: ExportMode, onProgress: (p: ExportProgress) => void, port?: number): Promise<ExportResult> {
-      calls.push({ method: "exportBackend", args: [mode, port] });
+    async exportStation(mode: ExportMode, onProgress: (p: ExportProgress) => void, port?: number): Promise<ExportResult> {
+      calls.push({ method: "exportStation", args: [mode, port] });
       for (const step of exportSteps) {
         onProgress(step);
       }

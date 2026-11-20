@@ -8,7 +8,7 @@ import { omHelp } from "./shell/help.ts";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { useSqueroConfig, type ConfigStore } from "@paperboat/shared/editor";
 import { Canvas } from "./canvas/Canvas.tsx";
-import { runBackendExport } from "./dock/dock.ts";
+import { runStationExport } from "./dock/dock.ts";
 import { StudioDock } from "./dock/index.tsx";
 import { Library, useClassIndex } from "./library/Library.tsx";
 import { PackageWindow } from "@paperboat/shared/packages";
@@ -149,7 +149,7 @@ function Studio({ omc, status }: { omc: OmcClient; status: OmcStatus }) {
   const currentEntry = workspace?.entries.find((entry) => entry.path === model?.file);
   const canExport = currentEntry ? currentEntry.classKind === "model" || currentEntry.classKind === "block" : false;
   const classKind = currentEntry?.classKind;
-  // A backend needs an interface: an input/output pin or a public parameter becomes the block's
+  // A station needs an interface: an input/output pin or a public parameter becomes the block's
   // port / Station property. Without one the export makes nothing Paperboat can connect.
   const publicParams = model?.params.filter((p) => !p.private).length ?? 0;
   const hasInterface = (model?.entries.length ?? 0) > 0 || publicParams > 0;
@@ -447,14 +447,14 @@ function Studio({ omc, status }: { omc: OmcClient; status: OmcStatus }) {
     });
   };
 
-  const handleExportBackend = async () => {
+  const handleExportStation = async () => {
     if (!api) return;
     if (!exportReady) {
       say(exportWhy, "error");
       return;
     }
     await saveCurrent();
-    const outcome = await runBackendExport(api, "ppk", () => {});
+    const outcome = await runStationExport(api, "pst", () => {});
     if (outcome.ok) {
       say(`Exported ${outcome.line}`);
     } else {
@@ -630,14 +630,14 @@ function Studio({ omc, status }: { omc: OmcClient; status: OmcStatus }) {
       },
       {
         id: "file.export",
-        label: "Export Paperboat Backend (.ppk)",
+        label: "Export Paperboat Station (.pst)",
         menu: "file",
         group: "export",
         shortcut: "Ctrl+E",
         chord: { key: "e", ctrl: true },
         enabled: exportReady,
         why: exportWhy || undefined,
-        run: () => void handleExportBackend(),
+        run: () => void handleExportStation(),
       },
 
       // Edit menu
