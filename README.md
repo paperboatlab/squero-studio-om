@@ -2,7 +2,7 @@
 
 Squero Studio OM (`squero studio [ OM ]`) is an acausal Modelica editor in Paperboat's flat-mono
 look: a library tree, a canvas of components and connectors, a split view of `.mo` and the
-generated C++, and a dock that checks the model's balance and exports a Paperboat backend. Every
+generated C++, and a dock that checks the model's balance and exports a Paperboat station. Every
 edit goes through `omc`, so the `.mo` stays OMEdit-compatible.
 
 **Docs:** <https://paperboatlab.github.io/apps/squero-studio-om/>, also in the app's Help window
@@ -11,7 +11,7 @@ Paperboat's `docs/site/build.py`.
 
 This repo contains both the React web application (`src/`) and the native C++ server & tools (`server/`).
 The server provides `squero/0`, the `omc` bridge, the `.mo` importer (`extends` resolver, `Icon(graphics)` and
-`iconTransformation` quantisers), the backend generator, and the `squero-om` binary.
+`iconTransformation` quantisers), the station generator, and the `squero-om` binary.
 
 ## Layout
 
@@ -28,8 +28,8 @@ squero-studio-om/    this repo (server/ and src/)
 From the `paperboat` CLI:
 
 ```sh
-paperboat start squero-studio-om [Model.mo]  # http://localhost:59201 (SQR01; the next free one up to 59299 if taken)
-paperboat stop squero-studio-om
+paperboat squero start squero-studio-om [Model.mo]  # http://localhost:59201 (SQR01; the next free one up to 59299 if taken)
+paperboat squero stop squero-studio-om
 ```
 
 From a checkout:

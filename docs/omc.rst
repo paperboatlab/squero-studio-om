@@ -8,7 +8,7 @@ pulls it again). ``SQUERO_OMC=native|podman|docker`` forces one.
 
 The container runs as you (rootless podman ``--userns=keep-id``, docker ``--user``) with your
 ``/tmp`` and ``$HOME`` at the same paths and no SELinux relabelling, so everything it writes
-(backends, FMUs, ``~/.openmodelica/libraries``) is yours.
+(stations, FMUs, ``~/.openmodelica/libraries``) is yours.
 
 Windows
 -------

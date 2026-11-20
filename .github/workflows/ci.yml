@@ -96,7 +96,7 @@ jobs:
           diff -u squero-studio-om/examples/dc-drive-cpp/domain/dc_drive.hpp /tmp/dc-drive-gen/domain/dc_drive.hpp
           diff -u squero-studio-om/examples/dc-drive-cpp/CMakeLists.txt /tmp/dc-drive-gen/CMakeLists.txt
 
-      # `paperboat start squero-studio-om` as a user runs it, beside the paperboat checkout above.
+      # `paperboat squero start squero-studio-om` as a user runs it, beside the paperboat checkout above.
       - uses: actions/checkout@v4
         with:
           repository: paperboatlab/paperboat-shared
@@ -113,10 +113,10 @@ jobs:
           cmake --build paperboat/engine/build --target paperboat
           pb="$GITHUB_WORKSPACE/paperboat/engine/build/tools/paperboat"
           cd "$RUNNER_TEMP"   # not the checkout: the app must find its own files
-          "$pb" start squero-studio-om --daemon
+          "$pb" squero start squero-studio-om --daemon
           for i in $(seq 60); do curl -sf http://127.0.0.1:59201/ >/dev/null && break; sleep 1; done
           node "$GITHUB_WORKSPACE/squero-studio-om/test/launch/check.mjs" 59201 || { cat /tmp/paperboat-squero-studio-om.log; exit 1; }
-          "$pb" stop squero-studio-om
+          "$pb" squero stop squero-studio-om
 
   # The server on Windows: omc natively from the OpenModelica installer, the same MSL as Linux, the
   # tests, then the launch through paperboat (bin/squero-om through Git for Windows' bash).
@@ -178,7 +178,7 @@ jobs:
           cmake --build paperboat/engine/build --config Release --target paperboat --parallel
           pb="$GITHUB_WORKSPACE/paperboat/engine/build/tools/Release/paperboat.exe"
           cd "$RUNNER_TEMP"
-          "$pb" start squero-studio-om --daemon
+          "$pb" squero start squero-studio-om --daemon
           for i in $(seq 60); do curl -sf http://127.0.0.1:59201/ >/dev/null && break; sleep 1; done
           node "$GITHUB_WORKSPACE/squero-studio-om/test/launch/check.mjs" 59201 || { cat /tmp/paperboat-squero-studio-om.log; exit 1; }
-          "$pb" stop squero-studio-om
+          "$pb" squero stop squero-studio-om

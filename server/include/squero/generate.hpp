@@ -1,10 +1,10 @@
 #pragma once
 
-// A Modelica model as a Paperboat backend (#160 contracts §6): `paperboat modelica generate`
-// and Studio's "Export backend" both call generate().
+// A Modelica model as a Paperboat station (#160 contracts §6): `paperboat modelica generate`
+// and Studio's "Export station" both call generate().
 //
 //   <model>-cpp/
-//     backend.toml descriptor.toml README.md   written once: yours to edit afterwards
+//     station.toml descriptor.toml README.md   written once: yours to edit afterwards
 //     CMakeLists.txt main.cpp domain/…         rewritten on every generate
 //     modelica/<Model>.mo                      the source, for the round trip
 //     fmu/<Model>.fmu                          the FMU path only
@@ -49,7 +49,7 @@ struct GenerateOptions {
 
 struct GenerateResult {
   std::string model;   // qualified class
-  std::string name;    // its backend name, e.g. "dc-motor"
+  std::string name;    // its station name, e.g. "dc-motor"
   std::filesystem::path out;
   std::string path;    // "ode" or "fmu"
   std::string reason;  // why that path
@@ -71,7 +71,7 @@ CheckResult check(Omc& omc, const std::filesystem::path& source, const std::stri
 // --- the pieces, for tests ---
 
 // "DCMotor" → "dc-motor"; "Modelica.Mechanics.X" → "x".
-std::string backend_name(std::string_view model);
+std::string station_name(std::string_view model);
 
 // A Modelica expression as omc prints it (backend DAE) → C++. `name(var, der)` spells a
 // variable (der: its derivative). Throws GenerateError naming what it can't translate.

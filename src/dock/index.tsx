@@ -4,7 +4,7 @@ import {
   checkModelBalance,
   findDanglingFlowPorts,
   fixDanglingPort,
-  runBackendExport,
+  runStationExport,
   undrawnNote,
   type BalanceResult,
   type DanglingPort,
@@ -37,7 +37,7 @@ export function StudioDock({
   const [outcome, setOutcome] = useState<ExportOutcome | null>(null);
   const [fixError, setFixError] = useState<string | null>(null);
   const [revision, setRevision] = useState(0);
-  // The backend build writes a log; follow it from this byte and send each new line to the console.
+  // The station build writes a log; follow it from this byte and send each new line to the console.
   const logOffset = useRef(0);
   const logPending = useRef("");
 
@@ -85,16 +85,16 @@ export function StudioDock({
     setOutcome(null);
     logOffset.current = 0;
     logPending.current = "";
-    onLog?.(mode === "ppk" ? "packing the backend…" : "starting the backend: building…", "info");
+    onLog?.(mode === "pst" ? "packing the station…" : "starting the station: building…", "info");
     const again = mode === "serve" ? running?.port : undefined; // a restart keeps its port
-    if (again) await runBackendExport(api, "stop", () => {}, again);
+    if (again) await runStationExport(api, "stop", () => {}, again);
     setRunning(null);
     setProgress({ stage: "check", fraction: 0 });
-    const res = await runBackendExport(api, mode, (p) => {
+    const res = await runStationExport(api, mode, (p) => {
       setProgress({ ...p });
     }, again);
     setProgress(null);
-    if (!(mode === "serve" && res.ok)) setOutcome(res); // a started backend reports below as it comes up
+    if (!(mode === "serve" && res.ok)) setOutcome(res); // a started station reports below as it comes up
     if (mode === "serve" && res.ok && res.result.port) {
       logOffset.current = 0;
       setRunning({ port: res.result.port, up: false });
@@ -102,14 +102,14 @@ export function StudioDock({
     setBusy(false);
   };
 
-  // A started backend builds first (minutes, cold): poll until it listens or exits.
+  // A started station builds first (minutes, cold): poll until it listens or exits.
   const pollPort = running && !running.up ? running.port : null;
   const apiRef = useRef(api);
   apiRef.current = api; // api is rebuilt on every status push: keep the timer off it
   useEffect(() => {
     if (!pollPort) return;
     const timer = setInterval(() => {
-      void runBackendExport(apiRef.current, "status", () => {}, pollPort, logOffset.current).then((res) => {
+      void runStationExport(apiRef.current, "status", () => {}, pollPort, logOffset.current).then((res) => {
         // Stream the log: the poll returns only what was written since the last one.
         const chunk = res.result?.log ?? "";
         if (chunk) {
@@ -136,7 +136,7 @@ export function StudioDock({
     return () => clearInterval(timer);
   }, [pollPort]);
 
-  // Listening is not ready: wait for the backend's own hello over its WebSocket.
+  // Listening is not ready: wait for the station's own hello over its WebSocket.
   const probePort = running?.up && !running.ready ? running.port : null;
   useEffect(() => {
     if (!probePort) return;
@@ -163,12 +163,12 @@ export function StudioDock({
   }, [probePort]);
   // While it builds, paperboat's own stage and clock (pb#332), else the log's last line.
   const STAGE: Record<string, string> = { prepare: "preparing", configure: "configuring", compile: "compiling", waiting: "starting" };
-  const backendWords = !running
+  const stationWords = !running
     ? null
     : running.error
-      ? `the backend failed: ${running.error}`
+      ? `the station failed: ${running.error}`
       : !running.up && running.stage
-        ? `${STAGE[running.stage] ?? "building"} the backend for :${running.port}…${running.elapsed !== undefined ? ` ${Math.floor(running.elapsed)}s` : ""}`
+        ? `${STAGE[running.stage] ?? "building"} the station for :${running.port}…${running.elapsed !== undefined ? ` ${Math.floor(running.elapsed)}s` : ""}`
         : !running.up
       ? `building for :${running.port}${running.line ? `: ${running.line.slice(0, 90)}` : "…"}`
       : !running.ready
@@ -178,7 +178,7 @@ export function StudioDock({
   const handleStop = async () => {
     if (!running || busy) return;
     setBusy(true);
-    const res = await runBackendExport(api, "stop", () => {}, running.port);
+    const res = await runStationExport(api, "stop", () => {}, running.port);
     setOutcome(res);
     if (res.ok) setRunning(null);
     setBusy(false);
@@ -238,19 +238,19 @@ export function StudioDock({
             type="button"
             className="studio-dock-export-key"
             disabled={!isBalanced || busy || !canExport}
-            title={!canExport ? why : isBalanced ? "Download the backend as a .ppk package" : balance.words}
-            onClick={() => void handleExport("ppk")}
+            title={!canExport ? why : isBalanced ? "Download the station as a .pst package" : balance.words}
+            onClick={() => void handleExport("pst")}
           >
-            Download .ppk
+            Download .pst
           </button>
           <button
             type="button"
             className="studio-dock-export-key"
             disabled={!isBalanced || busy || !canExport}
-            title={!canExport ? why : isBalanced ? "Start the backend as ssom_<model> on a free port" : balance.words}
+            title={!canExport ? why : isBalanced ? "Start the station as ssom_<model> on a free port" : balance.words}
             onClick={() => void handleExport("serve")}
           >
-            {running ? "Restart" : "Start"} backend
+            {running ? "Restart" : "Start"} station
           </button>
           {running && (
             <button type="button" className="studio-dock-export-key" disabled={busy} onClick={() => void handleStop()}>
@@ -260,13 +260,13 @@ export function StudioDock({
         </div>
       </div>
 
-      {(progress || outcome || fixError || backendWords) && (
+      {(progress || outcome || fixError || stationWords) && (
         <div className="studio-dock-row">
           {progress && <span className="studio-dock-stage">{progress.stage}</span>}
-          {backendWords && !progress && (
-            <span className={`studio-dock-stage backend-${running?.error ? "failed" : running?.ready ? "ready" : "wait"}`}>
+          {stationWords && !progress && (
+            <span className={`studio-dock-stage station-${running?.error ? "failed" : running?.ready ? "ready" : "wait"}`}>
               {running && !running.up && !running.error && <span className="wave" aria-hidden="true"><i /><i /><i /><i /><i /></span>}
-              {backendWords}
+              {stationWords}
             </span>
           )}
           {outcome && (

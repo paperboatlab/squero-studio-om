@@ -1,4 +1,4 @@
-// A running squero-om, as `paperboat start squero-studio-om` leaves it: the page is served, and
+// A running squero-om, as `paperboat squero start squero-studio-om` leaves it: the page is served, and
 // squero/0 reaches omc (its version, then the Modelica Standard Library loads). CI's launch job runs
 // it; Node 22's own WebSocket, so no dependency.
 //   node test/launch/check.mjs [port]      (59201 by default)

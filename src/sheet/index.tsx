@@ -135,7 +135,7 @@ export function InterfaceSheet({ open, onOpen, onClose, canExport }: InterfaceSh
               <div className="studio-sheet-subhead">Paperboat block</div>
               <PaperboatBlock />
               <p className="studio-handoff-note">
-                Paperboat opens <code>{folderHint}</code> via File › Backend… The Modelica icon is drawn in <b>View ▸ Icon</b>.
+                Paperboat opens <code>{folderHint}</code> via File › Station… The Modelica icon is drawn in <b>View ▸ Icon</b>.
               </p>
             </section>
           </>

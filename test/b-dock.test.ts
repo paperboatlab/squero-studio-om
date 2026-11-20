@@ -6,7 +6,7 @@ import {
   findDanglingFlowPorts,
   fixDanglingPort,
   parseBalance,
-  runBackendExport,
+  runStationExport,
   undrawnNote,
 } from "../src/dock/dock.ts";
 import type { ExportProgress } from "../src/model/types.ts";
@@ -165,12 +165,12 @@ test("dock: dangling flow connector detection and fix choice per domain", async 
   assert.equal(thermal.fix, null, "other domains show no fix button");
 });
 
-test("dock: exportBackend streams progress sequence and formats result or error", async () => {
+test("dock: exportStation streams progress sequence and formats result or error", async () => {
   const api = createFakeStudio();
   assert.equal(defaultExportFolder(api.model.name), "rl-circuit-cpp");
 
   const seen: ExportProgress[] = [];
-  const outcome = await runBackendExport(api, "ppk", (p) => seen.push(p));
+  const outcome = await runStationExport(api, "pst", (p) => seen.push(p));
 
   assert.equal(outcome.ok, true);
   assert.deepEqual(
@@ -186,22 +186,22 @@ test("dock: exportBackend streams progress sequence and formats result or error"
 
   // Error path
   api.setExportScript([{ stage: "check", fraction: 0.2 }], new Error("DAE has structural singularity"));
-  const failed = await runBackendExport(api, "serve", () => {});
+  const failed = await runStationExport(api, "serve", () => {});
   assert.equal(failed.ok, false);
   assert.equal(failed.line, "DAE has structural singularity");
 
-  // Start: building until the port opens; a backend that exits is an error carrying its log
+  // Start: building until the port opens; a station that exits is an error carrying its log
   api.setExportScript([], { name: "ssom_RLCircuit", port: 4100, state: "building" });
-  assert.match((await runBackendExport(api, "serve", () => {})).line, /^building ssom_RLCircuit for port 4100/);
+  assert.match((await runStationExport(api, "serve", () => {})).line, /^building ssom_RLCircuit for port 4100/);
   api.setExportScript([], { port: 4100, state: "running" });
-  assert.match((await runBackendExport(api, "status", () => {}, 4100)).line, /running on port 4100/);
+  assert.match((await runStationExport(api, "status", () => {}, 4100)).line, /running on port 4100/);
   api.setExportScript([], { port: 4100, state: "exited", log: "cmake build failed\n" });
-  const exited = await runBackendExport(api, "status", () => {}, 4100);
+  const exited = await runStationExport(api, "status", () => {}, 4100);
   assert.equal(exited.ok, false);
   assert.match(exited.line, /exited:\ncmake build failed/);
 });
 
-test("export folder follows the generator's backend_name", () => {
+test("export folder follows the generator's station_name", () => {
   assert.equal(defaultExportFolder("DCMotor"), "dc-motor-cpp");
   assert.equal(defaultExportFolder("Lib.Pkg.CartPole"), "cart-pole-cpp");
   assert.equal(defaultExportFolder("my_model2"), "my-model2-cpp");

@@ -21,7 +21,7 @@ test("scopes: added in order on a two-column grid, resized, moved, removed", () 
   assert.equal(addScope(removeScope(l, "Scope 2"), "").instruments!.at(-1)!.block, "Scope 2"); // the free name
 });
 
-test("scopes: channels live in the instrument's settings; tabs and labels are the dashboard's", () => {
+test("scopes: channels live in the instrument's settings; tabs and labels are the board's", () => {
   let a = arrangeScopes(START);
   a = arrangeScopes(setSettings(a, "Scope 1", { picks: ["x", "y"] }));
   assert.deepEqual(picksOf(a.instruments[0]), ["x", "y"]);

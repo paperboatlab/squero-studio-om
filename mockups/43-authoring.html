@@ -538,7 +538,7 @@
       <button type="button" data-page="files" data-note="the rail is the workspace">files</button>
       <button type="button" data-page="new-class" data-note="class creation is a sheet">new class</button>
       <button type="button" data-page="import" data-note="dependency check before mounting">import</button>
-      <button type="button" data-page="export" data-note=".mo, .molib, .ppk from one sheet">export</button>
+      <button type="button" data-page="export" data-note=".mo, .molib, .pst from one sheet">export</button>
       <span class="sep"></span>
       <button type="button" id="theme">theme: light</button>
     </div>
@@ -640,7 +640,7 @@
           <span class="pill2">checkModel 12 ms</span>
           <span class="spacer"></span>
           <span class="pill2">compressor</span>
-          <button type="button" class="key">Export backend</button>
+          <button type="button" class="key">Export station</button>
         </div>
       </div>
     </section>
@@ -1244,7 +1244,7 @@ See `Chiller.Components.Compressor` for the compressor model.</div>
           <div class="side-head"><div class="choice"><button type="button" class="on">flat</button><button type="button">causal c++</button></div><span class="spacer"></span><span class="pill2">read-only</span></div>
           <div class="side-body"><pre class="code"><span class="row"><span class="ln">1</span><span class="src"><span class="tok-keyword">model</span> Compressor</span></span><span class="row"><span class="ln">2</span><span class="src">  <span class="tok-type">Real</span> port_a.m_flow;</span></span></pre></div>
         </aside>
-        <div class="dock"><span class="balance"><i class="dot"></i> balanced · 214 / 214</span><span class="spacer"></span><button type="button" class="key">Export backend</button></div>
+        <div class="dock"><span class="balance"><i class="dot"></i> balanced · 214 / 214</span><span class="spacer"></span><button type="button" class="key">Export station</button></div>
 
         <div class="backdrop"></div>
         <div class="sheet" role="dialog" aria-label="New class" aria-modal="true">
@@ -1326,7 +1326,7 @@ end ExpansionValve;</pre></div>
           <div class="side-head"><div class="choice"><button type="button" class="on">flat</button><button type="button">causal c++</button></div><span class="spacer"></span><span class="pill2">read-only</span></div>
           <div class="side-body"><pre class="code"><span class="row"><span class="ln">1</span><span class="src"><span class="tok-keyword">model</span> Compressor</span></span><span class="row"><span class="ln">2</span><span class="src">  <span class="tok-type">Real</span> port_a.m_flow;</span></span></pre></div>
         </aside>
-        <div class="dock"><span class="balance"><i class="dot"></i> balanced · 214 / 214</span><span class="spacer"></span><button type="button" class="key">Export backend</button></div>
+        <div class="dock"><span class="balance"><i class="dot"></i> balanced · 214 / 214</span><span class="spacer"></span><button type="button" class="key">Export station</button></div>
 
         <div class="backdrop"></div>
         <div class="sheet" role="dialog" aria-label="Import" aria-modal="true">
@@ -1398,7 +1398,7 @@ end ExpansionValve;</pre></div>
           <div class="side-head"><div class="choice"><button type="button" class="on">flat</button><button type="button">causal c++</button></div><span class="spacer"></span><span class="pill2">read-only</span></div>
           <div class="side-body"><pre class="code"><span class="row"><span class="ln">1</span><span class="src"><span class="tok-keyword">model</span> Compressor</span></span><span class="row"><span class="ln">2</span><span class="src">  <span class="tok-type">Real</span> port_a.m_flow;</span></span></pre></div>
         </aside>
-        <div class="dock"><span class="balance"><i class="dot"></i> balanced · 214 / 214</span><span class="spacer"></span><button type="button" class="key">Export backend</button></div>
+        <div class="dock"><span class="balance"><i class="dot"></i> balanced · 214 / 214</span><span class="spacer"></span><button type="button" class="key">Export station</button></div>
 
         <div class="backdrop"></div>
         <div class="sheet" role="dialog" aria-label="Export" aria-modal="true">
@@ -1406,13 +1406,13 @@ end ExpansionValve;</pre></div>
           <div class="sheet-body">
             <div>
               <div class="field"><label>format</label>
-                <div class="choice" style="gap:14px;font-size:12px"><button type="button">.mo</button><button type="button" class="on">.molib</button><button type="button">.ppk</button></div>
+                <div class="choice" style="gap:14px;font-size:12px"><button type="button">.mo</button><button type="button" class="on">.molib</button><button type="button">.pst</button></div>
               </div>
               <div class="field"><label>include</label>
                 <div class="check"><b>[x]</b> documentation annotations</div>
                 <div class="check"><b>[x]</b> icon and diagram annotations</div>
                 <div class="check"><b>[ ]</b> flatten to one file</div>
-                <div class="check"><b>[ ]</b> station adapter (ppk only)</div>
+                <div class="check"><b>[ ]</b> station adapter (pst only)</div>
               </div>
               <div class="field" style="margin-bottom:0"><label>target</label><div class="target">./dist/Chiller.molib</div></div>
             </div>
@@ -1423,10 +1423,10 @@ end ExpansionValve;</pre></div>
               <div class="dep"><span class="st ok">✓</span><span>Modelica 4.1.0</span></div>
               <div class="dep"><span class="st ok">✓</span><span>package.order written</span></div>
               <div class="dep"><span class="st ok">✓</span><span>omc syntax check</span></div>
-              <p style="margin:10px 0 0;font:400 11px var(--font-sans);color:var(--text-muted)">A .ppk also runs the exporter and writes the Paperboat backend beside the model.</p>
+              <p style="margin:10px 0 0;font:400 11px var(--font-sans);color:var(--text-muted)">A .pst also runs the exporter and writes the Paperboat station beside the model.</p>
             </div>
           </div>
-          <div class="sheet-foot"><span class="note">one sheet for .mo, .molib and .ppk</span><span class="spacer"></span><button type="button" class="key">Cancel</button><button type="button" class="key ink">Export</button></div>
+          <div class="sheet-foot"><span class="note">one sheet for .mo, .molib and .pst</span><span class="spacer"></span><button type="button" class="key">Cancel</button><button type="button" class="key ink">Export</button></div>
         </div>
       </div>
     </section>

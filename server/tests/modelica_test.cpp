@@ -102,11 +102,11 @@ TEST_CASE("Modelica expressions become C++", "[modelica]") {
   CHECK_THROWS_AS(mo::to_cpp("a .+ b", name), mo::GenerateError);
 }
 
-TEST_CASE("backend names come from the class's short name", "[modelica]") {
-  CHECK(mo::backend_name("DCMotor") == "dc-motor");
-  CHECK(mo::backend_name("Modelica.Mechanics.Rotational.Components.Inertia") == "inertia");
-  CHECK(mo::backend_name("PIDController") == "pid-controller");
-  CHECK(mo::backend_name("mass_spring") == "mass-spring");
+TEST_CASE("station names come from the class's short name", "[modelica]") {
+  CHECK(mo::station_name("DCMotor") == "dc-motor");
+  CHECK(mo::station_name("Modelica.Mechanics.Rotational.Components.Inertia") == "inertia");
+  CHECK(mo::station_name("PIDController") == "pid-controller");
+  CHECK(mo::station_name("mass_spring") == "mass-spring");
 }
 
 TEST_CASE("generate picks the ODE path when it can and says why when it can't", "[modelica][omc]") {
